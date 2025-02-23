@@ -20,8 +20,7 @@ Whenever you embark on a journey in statistical modelling, it's good to be remin
 
 **'All models are wrong, but some are useful.'**.
 
-![Photograph of Geoge E.P. Box, "one of the great statistical minds of the 20th century"](images/Box.jpeg)
-Conceptual vs. mathematical vs. statistical...
+![Photograph of Geoge E.P. Box, "one of the great statistical minds of the 20th century"](images/Box.jpeg) Conceptual vs. mathematical vs. statistical...
 
 Select models based on your goals - exploration vs. inference vs. prediction
 
@@ -34,3 +33,135 @@ Select models based on your goals - exploration vs. inference vs. prediction
 # Sensitivity analyses
 
 # Conservation implications
+
+**Week 5 – Ecological Modelling – Sea turtle population models in Queensland**
+
+Before class: read up on marine sea turtle conservation Australia – what are the major threats to sea turtles?
+
+Workshop scenario: You’re managing a sea turtle population, and doing some monitoring to sea how the population is tracking. You notice a decline. What can you do?
+
+\[Brainstorm potential threats and management actions\]
+
+How do you know what action to take?
+
+Enter the world of ecological modelling. We can use models to help us predict what will happen under different management scenarios, in order to choose the best course of action
+
+In this case, we need to model how marine sea turtle populations will increase or decrease through time. How might we do that?
+
+\[Breakout to draw a conceptual model of sea turtle population growth\]
+
+#Turtles(t-1)  (moderated by, births rate, death rate) -\> Turtles(t)
+
+We can use some simple maths to turn this conceptual model into a model that will predict how many turtles we will have in the future
+
+First we can turn the per capita birth rate and death rate into an per capita growth rate called r. Following this, the change in the turtle population (N) over time (t) will be
+
+Nt = rNt-1
+
+Let’s use this to predict turtle population trends through time.
+
+\[Break to use R to model based on different initial conditions and parameter values\]
+
+This is a very simple model of population growth, which is making a couple of very big assumptions. What are they?
+
+-              Closed system, no indiviudals entering or leaving
+
+-              Exponential growth, therefore no density dependence, e.g., competition
+
+-              Birth and death rates are the same for all individuals in the population
+
+-              ….
+
+Remember,
+
+‘All models are wrong, but some are useful’
+
+How can we make this more realistic in a way that will make the model more useful? We want to know how to use management to stop the population from declining….our different management actions would target different cohorts of the population,….for example we know a major cause of deaths is hatchling mortality, so we could focus actions that would support that, or we know that bycatch is another cause of mortality, so we could focus on that. How can we use this model to support the best decision?
+
+We can develop a slightly more complex model that assumes different age groups in the population will have different threats and therefore different per capita growth rates, allowing us to predict whether the overall population will increase or decrease if we implement actions to protect different life stages
+
+Let’s draw a model with different life stages….
+
+To turn this into a mathematical model that we can make predictions with we can use a handy trick from linear algebra called ‘matrix multiplication. This allows us to multiply our stage specific population growth rates by the number of individuals in each stage. Lets see how that works….
+
+\[Christina to illustrate matrix multiplication\]
+
+One really cool thing about this is that we can use something called an eigenvalue of the matrix to estimate the overall intrinsic rate of population growth, eigenvalue = er, therefore to get r, we take the inverse of the exponent, which is a log. If r is 0, then the population is stable, if its greater than 0 its increasing, and vice versa.
+
+What we really want to know if focussing management on different stages of the cause the overall population to be increase.
+
+To do this in real life, we would need to parameterise the model mortality and survival rates, how would we do that?
+
+-              Field studies
+
+-              Literature review
+
+Luckily, someone has already done this for us. We can use this table of demographic parameters for the Loggerhead sea turtles in Heron Island. This is a pristine population that…
+
+Let’s see what are model predicts for the trend of this population through time.
+
+Ok, now let’s see if we do some management that increases hatchling success. What about sub-adults, with turtle exclusion devices.
+
+Summary
+
+So today we learned how to use some fairly simple models to inform conservation and management of threatened species.
+
+We started with some conceptual models, added some maths and data to it, and voila, we’re making predictions about the future of sea turtles.
+
+In reality, these types of simple models have been hugely important…eventually informing legislation that required TEDs, etc….
+
+Next week we’ll continue on our journey of learning the basics of ecological modelling. We’ll see what happens when we know longer assume the ecological relationships we’re modelling are deterministic, but rather that they are probabilistic due to natural variability.
+
+Also, rather than use our models to predict the future, what if we want to estimate the effect of management that has occurred in the past?
+
+That will be our focus for next week.
+
+Learning outcomes:
+
+-              How to make a conceptual model and turn it into a mathematical model to make predictions
+
+-              Difference between variable and parameter
+
+-              How to parameterise models
+
+-              How to use models to inform management
+
+Resources
+
+<https://www.khanacademy.org/science/ap-biology/ecology-ap/population-ecology-ap/a/exponential-logistic-growth>
+
+**Week 6 – Ecological Modelling – Quantifying the effect of MPAs on fisheries biomass**
+
+Next week we’ll continue on our journey of learning the basics of ecological modelling. We’ll see what happens when we know longer assume the ecological relationships we’re modelling are deterministic, but rather that they are probabilistic due to natural variability.
+
+Also, rather than use our models to predict the future, what if we want to estimate the effect of management that has occurred in the past?
+
+We’ll look at case study of
+
+<https://reeflifesurvey.com/explorer/map>
+
+<https://prioritizr.github.io/wdpar/>
+
+where did I get the data?
+
+<https://portal.aodn.org.au/>
+
+**Population model analysis for loggerhead sea turtle, Caretta caretta, in Queensland**
+
+Key takeaways
+
+-              Marine turtle populations are a major conservation concern… why?
+
+-              In Australia…major threats are
+
+o   – Heron island – protected group of turtles
+
+o   Nesting females at Mon Repos – major rookery, nesting pop. Declining at % per year
+
+-              Why or how could models help us conserve them?
+
+-              Matrix models of population growth predict small declines in annual survival rates of adult and subadult loggerheads – profound impact on population dyamics
+
+-              A loss of only a few hundred subadult and adult females each year could lead to extinction of the eastern Australian loggerheadsin less than a century
+
+-              At Mon Repos, nesting female survival is apparently so low that even beach protection efforts resulting in 90% hatchling emergence success would not prevent population decline
