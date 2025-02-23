@@ -102,3 +102,5 @@ exp(filter(mod2_coefs, Coefficient == '(Intercept)')$Estimate + filter(mod2_coef
 # So, MPAs are increasing fish diversity on average by \~ 3 species
 
 # do a plot of the results....
+
+This is the estimated Poisson regression coefficient comparing mpas to non mpa areas, given the other variables are held constant in the model
