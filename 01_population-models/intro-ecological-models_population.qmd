@@ -1,0 +1,36 @@
+---
+title: "intro-ecological-models"
+format: html
+theme: sandstone
+author-title: Made for
+author: TAMs course
+toc: true
+toc-location: left
+toc-title: Content
+toc-depth: 4
+published-title: Date
+date: 20-03-2025
+editor: visual
+embed-resources: true
+---
+
+# What is a model?
+
+Whenever you embark on a journey in statistical modelling, it's good to be reminded of the following quote from *George E.P. Box*,
+
+**'All models are wrong, but some are useful.'**.
+
+![Photograph of Geoge E.P. Box, "one of the great statistical minds of the 20th century"](images/Box.jpeg)
+Conceptual vs. mathematical vs. statistical...
+
+Select models based on your goals - exploration vs. inference vs. prediction
+
+# Conceptual model - a case study in Australian loggerhead seaturtles
+
+# Adding some maths
+
+# Making predictions from our models
+
+# Sensitivity analyses
+
+# Conservation implications
