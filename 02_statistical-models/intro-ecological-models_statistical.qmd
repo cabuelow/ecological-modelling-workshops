@@ -1,5 +1,5 @@
 ---
-title: "intro-ecological-models"
+title: "Quantifying the effect of conservation"
 format: html
 theme: sandstone
 author-title: Made for
@@ -9,16 +9,39 @@ toc-location: left
 toc-title: Content
 toc-depth: 4
 published-title: Date
-date: 20-03-2025
+date: 27-03-2025
 editor: visual
 embed-resources: true
 ---
 
+**Week 6 – Ecological Modelling – Quantifying the effect of MPAs on fisheries biomass**
+
+Next week we’ll continue on our journey of learning the basics of ecological modelling. We’ll see what happens when we know longer assume the ecological relationships we’re modelling are deterministic, but rather that they are probabilistic due to natural variability.
+
+Also, rather than use our models to predict the future, what if we want to estimate the effect of management that has occurred in the past?
+
+We’ll look at case study of
+
+<https://reeflifesurvey.com/explorer/map>
+
+<https://prioritizr.github.io/wdpar/>
+
+where did I get the data?
+
+<https://portal.aodn.org.au/>
+
+**Population model analysis for loggerhead sea turtle, Caretta caretta, in Queensland**
+```{r}
 # set up a DAG to identify what we need to adjust for to estimate the effect of MPA on fish diversity
 
-library(tidyverse) library(dagitty) library(ggdag)
+library(tidyverse) 
+library(dagitty) 
+library(ggdag)
 
-dag \<- dagify(diversity \~ MPA, diversity \~ MPA_dist, diversity \~ latitude, diversity \~ Port_dist, diversity \~ depth, diversity \~ fishing, diversity \~ habitat, fishing \~ MPA, fishing \~ Port_dist, MPA \~ Port_dist, habitat \~ depth, habitat \~ latitude, fishing \~ MPA_dist, MPA \~ depth, MPA \~ habitat, fishing \~ habitat, fishing \~ depth, exposure = "MPA", outcome = "diversity")
+dag <- dagify(diversity ~ MPA, diversity ~ MPA_dist, diversity ~ latitude, diversity ~ Port_dist, diversity ~ depth, 
+              diversity ~ fishing, diversity ~ habitat, fishing ~ MPA, fishing ~ Port_dist, MPA ~ Port_dist, habitat ~ depth, 
+              habitat ~ latitude, fishing ~ MPA_dist, MPA ~ depth, MPA ~ habitat, fishing ~ habitat, fishing ~ depth, 
+              exposure = "MPA", outcome = "diversity")
 
 # plot the dag
 
@@ -30,77 +53,138 @@ ggdag_adjustment_set(dag, text_size = 2) + theme_classic()
 
 # get protected area data
 
-library(wdpar) library(sf) library(tmap)
+library(wdpar) 
+library(sf) 
+library(tmap)
 
-pa_aus \<- wdpa_fetch("Australia", wait = TRUE, download_dir = rappdirs::user_data_dir("wdpar")) mpa_aus \<- pa_aus \|\> \# filter out terrestrial mpas filter(MARINE != "0") \|\> \# clean data wdpa_clean() st_write(mpa_aus, '02_statistical-models/data/mpa_aus.gpkg')
+pa_aus <- wdpa_fetch("Australia", wait = TRUE, download_dir = rappdirs::user_data_dir("wdpar")) 
+mpa_aus <- pa_aus |>  
+  # filter out terrestrial mpas filter
+  filter(MARINE != "0") |> 
+  # clean data 
+  wdpa_clean() 
+st_write(mpa_aus, '02_statistical-models/data/mpa_aus.gpkg')
 
 # have a look
 
-sf_use_s2(FALSE) \# to avoid issues with mapping invalid geometries tmap_mode('view') mpa_aus \|\> qtm(fill = 'NO_TAKE')
+sf_use_s2(FALSE)
+# to avoid issues with mapping invalid geometries 
+tmap_mode('view') 
+mpa_aus |>  qtm(fill = 'NO_TAKE')
 
 # read in fish data
 
-fish_dat \<- read.csv('02_statistical-models/data/rls_surveydata.csv') \|\> filter(indicator == 'Fish Species' & location != 'Cape Howe') head(fish_dat) \# turn into a spatial dataframe fish_dat_sf \<- st_as_sf(fish_dat, coords = c('longitude', 'latitude'), crs = 4326) \|\> st_transform(st_crs(mpa_aus)) qtm(fish_dat_sf)
+fish_dat <- read.csv('02_statistical-models/data/rls_surveydata.csv') |>  
+  filter(indicator == 'Fish Species' & location != 'Cape Howe') 
+
+head(fish_dat) # turn into a spatial dataframe 
+fish_dat_sf <- st_as_sf(fish_dat, coords = c('longitude', 'latitude'), crs = 4326) |>  
+  st_transform(st_crs(mpa_aus)) 
+qtm(fish_dat_sf)
 
 # keep PAs that intersect with fish data
 
-mpa_nsw \<- st_join(mpa_aus, fish_dat_sf, left = F) \|\> select(WDPAID:geometry) \|\> group_by(WDPAID, NAME) \|\> summarise() qtm(mpa_nsw)
+mpa_nsw <- st_join(mpa_aus, fish_dat_sf, left = F) |> 
+  select(WDPAID:geometry) |> 
+  group_by(WDPAID, NAME) |>  
+  summarise() 
+qtm(mpa_nsw)
 
 # join MPA info to fish survey data
 
-fish_dat_mpa \<- fish_dat_sf \|\> st_join(filter(mpa_aus, WDPAID %in% mpa_nsw\$WDPAID))
+fish_dat_mpa <- fish_dat_sf |>  
+  st_join(filter(mpa_aus, WDPAID %in% mpa_nsw$WDPAID))
 
 # colour fish survey points whether in an mpa or not
 
-qtm(mpa_nsw) + qtm(fish_dat_mpa, dots.col = 'PA_DEF') \# how many? nrow(filter(fish_dat_mpa, PA_DEF == 'PA'))/nrow(fish_dat_mpa)
+qtm(mpa_nsw) + qtm(fish_dat_mpa, dots.col = 'PA_DEF') 
+# how many? 
+nrow(filter(fish_dat_mpa, PA_DEF == 'PA'))/nrow(fish_dat_mpa)
 
 # get shortest distance of each survey point to a port
 
-port_dat \<- read.csv('02_statistical-models/data/nsw-ports.csv') \|\> st_as_sf(coords = c('long', 'lat'), crs = 4326) \|\> st_transform(st_crs(mpa_nsw)) qtm(port_dat) port_dist \<- fish_dat_mpa \|\> st_distance(port_dat) colnames(port_dist) \<- port_dat\$name port_dist2 \<- data.frame(st_drop_geometry(fish_dat_mpa), units::drop_units(port_dist)) \|\> pivot_longer(cols = c(Yamba:Eden), names_to = 'Port_name', values_to = 'Port_distance_m') \|\> group_by(survey.id) \|\> summarise(Port_distance_m = min(Port_distance_m))
+port_dat <- read.csv('02_statistical-models/data/nsw-ports.csv') |> 
+  st_as_sf(coords = c('long', 'lat'), crs = 4326) |>  
+  st_transform(st_crs(mpa_nsw)) 
+qtm(port_dat) 
+
+port_dist <- fish_dat_mpa |> 
+  st_distance(port_dat) 
+colnames(port_dist) <- port_dat$name 
+port_dist2 <- data.frame(st_drop_geometry(fish_dat_mpa), units::drop_units(port_dist)) |> 
+  pivot_longer(cols = c(Yamba:Eden), names_to = 'Port_name', values_to = 'Port_distance_m') |> 
+  group_by(survey.id) |> 
+  summarise(Port_distance_m = min(Port_distance_m))
 
 # join to master dataframe
 
-fish_dat_mpa \<- fish_dat_mpa \|\> left_join(port_dist2) head(fish_dat_mpa)
+fish_dat_mpa <- fish_dat_mpa |> 
+  left_join(port_dist2) 
+head(fish_dat_mpa)
 
 # read in habitat and depth spatial data
 
-habitat_dat \<- st_read('02_statistical-models/data/Seabed_habitat_New_South_Wales_State_Waters/SeamapAus_NSW_seabed_habitat_statewide_2013Polygon.shp') \|\> st_transform(st_crs(mpa_nsw))
+habitat_dat <- st_read('02_statistical-models/data/Seabed_habitat_New_South_Wales_State_Waters/SeamapAus_NSW_seabed_habitat_statewide_2013Polygon.shp') |> 
+  st_transform(st_crs(mpa_nsw))
 
 # spatial join
 
-fish_dat_mpa \<- fish_dat_mpa \|\> st_join(habitat_dat) head(fish_dat_mpa) \# assign anything with NAs as non-reef and 0 - 20m depth fish_dat_mpa \<- fish_dat_mpa \|\> mutate(Habitat = ifelse(is.na(Habitat), 'Non-Reef', Habitat), Depth = ifelse(is.na(Depth), '0 - 20m', Depth)) write.csv(st_drop_geometry(fish_dat_mpa), '02_statistical-models/data/master-data.csv', row.names = F)
+fish_dat_mpa <- fish_dat_mpa |> 
+  st_join(habitat_dat) 
+head(fish_dat_mpa) # assign anything with NAs as non-reef and 0 - 20m depth 
+fish_dat_mpa <- fish_dat_mpa |> 
+  mutate(Habitat = ifelse(is.na(Habitat), 'Non-Reef', Habitat), Depth = ifelse(is.na(Depth), '0 - 20m', Depth)) 
+write.csv(st_drop_geometry(fish_dat_mpa), '02_statistical-models/data/master-data.csv', row.names = F)
 
 # fit statistical model to estimate causal effect of MPA on fish diversity
 
-library(lme4) \# good resource: https://theoreticalecology.github.io/AdvancedRegressionModels/2C-RandomEffects.html dat \<- read.csv('02_statistical-models/data/master-data.csv') \|\> \# dummy code binary variables \# make categorical variables factors mutate(MPA_present = factor(ifelse(is.na(PA_DEF), 0, 1)), Habitat_Depth = factor(ifelse(is.na(Label), 'Non Reef 0 - 20m', Label)), site.code = factor(site.code), fish_diversity = value, Port_distance_m = Port_distance_m/(2\*sd(Port_distance_m))) summary(dat)
+library(lme4) \# good resource: https://theoreticalecology.github.io/AdvancedRegressionModels/2C-RandomEffects.html 
+dat <- read.csv('02_statistical-models/data/master-data.csv') |> 
+  # dummy code binary variables 
+  # make categorical variables factors 
+  mutate(MPA_present = factor(ifelse(is.na(PA_DEF), 0, 1)), Habitat_Depth = factor(ifelse(is.na(Label), 'Non Reef 0 - 20m', Label)), 
+         site.code = factor(site.code), fish_diversity = value, Port_distance_m = Port_distance_m/(2*sd(Port_distance_m)))
+summary(dat)
 
 # what do the raw data tell us?
 
-ggplot(dat) + aes(x = MPA_present, y = fish_diversity) + geom_boxplot() + geom_jitter(alpha = 0.2) + theme_classic()
+ggplot(dat) + 
+  aes(x = MPA_present, y = fish_diversity) + geom_boxplot() + geom_jitter(alpha = 0.2) + theme_classic()
 
 # run model
-
-mod \<- lmer(fish_diversity \~ MPA_present + Port_distance_m + Habitat_Depth + (1\|site.code), data = dat) summary(mod)
+library(lme4)
+mod <- lmer(fish_diversity ~ MPA_present + Port_distance_m + Habitat_Depth + (1|site.code), data = dat) 
+summary(mod)
 
 # check our structural model assumptions
 
-qqnorm(resid(mod)) qqline(resid(mod)) plot(mod)
+qqnorm(resid(mod)) 
+qqline(resid(mod)) 
+plot(mod)
 
 # try a different family/distribution
 
-mod2 \<- glmer(fish_diversity \~ MPA_present + Port_distance_m + Habitat_Depth + (1\|site.code), data = dat, family = poisson(link = "log")) summary(mod2) qqnorm(resid(mod2)) qqline(resid(mod2)) plot(mod2)
+mod2 <- glmer(fish_diversity ~ MPA_present + Port_distance_m + Habitat_Depth + (1|site.code), data = dat, family = poisson(link = "log")) 
+summary(mod2) 
+qqnorm(resid(mod2)) 
+qqline(resid(mod2)) 
+plot(mod2)
 
 # what is the effect of MPAs on fish diversity?
 
-mod2_coefs \<- data.frame(Coefficient = row.names(summary(mod2)$coefficients),
-                         summary(mod2)$coefficients) head(mod2_coefs) exp(filter(mod2_coefs, Coefficient == 'MPA_present1')\$Estimate)
+mod2_coefs <- data.frame(Coefficient = row.names(summary(mod2)$coefficients),
+                          summary(mod2)$coefficients) 
+head(mod2_coefs) 
+exp(filter(mod2_coefs, Coefficient == 'MPA_present1')$Estimate)
 
 # fish diversity on average is predicted to be
 
-exp(filter(mod2_coefs, Coefficient == '(Intercept)')$Estimate + filter(mod2_coefs, Coefficient == 'MPA_present1')$Estimate) \# in MPAS, compared to outside MPAs, exp(filter(mod2_coefs, Coefficient == '(Intercept)')\$Estimate)
+exp(filter(mod2_coefs, Coefficient == '(Intercept)')$Estimate + filter(mod2_coefs, Coefficient == 'MPA_present1')$Estimate) # in MPAS, compared to outside MPAs, exp(filter(mod2_coefs, Coefficient == '(Intercept)')\$Estimate)
 
 # So, MPAs are increasing fish diversity on average by \~ 3 species
 
 # do a plot of the results....
 
 This is the estimated Poisson regression coefficient comparing mpas to non mpa areas, given the other variables are held constant in the model
+
+```
