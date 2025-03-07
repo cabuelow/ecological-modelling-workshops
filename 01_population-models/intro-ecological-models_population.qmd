@@ -1,5 +1,5 @@
 ---
-title: "Week 5 - Modelling sea turtle population models in Queensland"
+title: "Week 5 - Modelling to inform conservation of an endangered species"
 format: html
 theme: sandstone
 author-title: Made for
@@ -9,7 +9,7 @@ toc-location: left
 toc-title: Content
 toc-depth: 4
 published-title: Date
-date: 20-03-2025
+date: 2025-03-20
 editor: visual
 embed-resources: true
 ---
@@ -18,24 +18,26 @@ embed-resources: true
 
 ![Photograph of Geoge E.P. Box, "one of the great statistical minds of the 20th century"](images/Box.jpeg) 
 
-In today's workshop we're going to learn how to model sea turtle populations using a mathematical model that, while relatively simple in comparison to other modelling approaches, has been incredibly useful. 
+In today's workshop we're going to learn how to model sea turtle populations using a mathematical model that, while relatively simple in comparison to some modelling approaches, has been incredibly useful. 
 
 ![Turtle exclusion devices (TEDs) required by law on shrimp harvesting boats since 1987](images/TED.png)
 
-Legislation requiring TEDs in shrimp trawls was a direct result of the population modelling in this scientific paper
+US legislation requiring TEDs in shrimp trawls was a direct result of population modelling published in this scientific paper: 
 
 ![Crouse et al. 1987](images/Crouse.png)
 
 Read the full paper [here](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.2307/1939225?casa_token=ySTTEjkJC0oAAAAA%3ApkFPN9r-mjw3_Iw7xGA-wAO5Yx_Yp6deSFZcLQWqqgvbM5-Db0mQds25syalm46yQktdS3E80xGGaDTxxg)
 
-While this modelling paper informed US legislation to conserve endangered sea turtles, similar population models have been used to inform conservation of declining loggerhead sea turtle populations here in Australia. 
+Similar population models have been used to inform conservation of declining loggerhead sea turtle populations here in Australia.
 
 ![Loggerhead migration routes in Queensland, Australia](images/loggerhead_turtle_mig_routes.jpg)
 Find out more about [loggerheads in Queensland here](https://www2.gbrmpa.gov.au/learn/animals/marine-turtles)
 
 Let's imagine we were conservation managers of the loggerhead sea turtle population in Queensland back in the early 1990s. We had some monitoring data that suggests the population overall has been declining since the 1970s. What can we do to help it recover?
 
-We can use models to help us predict what will happen under different conservation scenarios, in order to choose the best course of action.
+**Models help us predict the 'what if' this happened...**
+
+We can use models to help us predict what will happen under different conservation and management scenarios, in order to choose the best course of action.
 
 #### **Break out group (15 minutes)** - Loggerhead sea turtle populations
 
@@ -55,14 +57,19 @@ Turtles(t-1)  (moderated by, births rate, death rate) -\> Turtles(t)
 
 ### Mathematical model
 
-We can use some simple maths to turn this conceptual model into a model that will predict how many turtles we will have in the future.
+We can use some simple maths to turn this conceptual model into a model that will predict how many turtles there will have in the future, based on the **initial conditions** (i.e., number of sea turtles in the population at time $t$) and model **parameters** (i.e., birth rate and death rate).
 
-First we can turn the per capita birth rate and death rate into an per capita growth rate called $r$. Following this, the change in turtle population size $N$ over time $t$ will be,
+First we can turn the per capita birth rate and death rate into a per capita growth rate called $r$. Following this, the change in turtle population size $N$ over time $t$ will be,
 
 $$N_{t+1} = rN_{t}$$
-Let's say we know the initial population size ($N$) of loggerhead sea turtles is 1000 individuals. The annual per capita growth rate ($r$) is 0.9. In other words the population is declining at a rate of 10% per year. These values parameterise our mathematical population model. Now that it is parameterised, we can use it to predict turtle population trends through time.
+If $r$ is equal to 1, the population will be stable. If it's lower than 1, the population is declining. If it's greater than 1, it's increasing.
+
+#### Run the model in R
+
+Let's say we know the initial population size ($N$) of loggerhead sea turtles is 1000 individuals and we want to know what it will be in 50 years. We've observed an annual decline in the overall population size of 8%, translating to an annual per capita growth rate ($r$) of $1-0.08 = 0.92$. Now that we've parameterised our mathematical model, we can use it to predict turtle population trends through time.
 
 ```{r}
+library(tidyverse)
 # make a function project population size using our mathematical model
 predict_pop <- function(init_size, r, t){
   out <- rep(NA, t)
@@ -75,11 +82,11 @@ predict_pop <- function(init_size, r, t){
 }
 
 # use the function to predict population size through time and store in a dataframe
-predictions <- predict_pop(init_size = 1000, r = 0.9, t = 50)
+predictions <- predict_pop(init_size = 1000, r = 0.92, t = 50)
 tail(predictions)
 ```
 
-Okay great, so we've got some predictions of sea turtle population size through time. In 50 years, there will only be approximately 5 individuals left.
+Okay great, so we've got some predictions of sea turtle population size through time. In 50 years, there will only be approximately 15 turtles left from our initial population size of 1000.
 
 Let's plot the trend.
 
@@ -91,7 +98,7 @@ ggplot(predictions) +
   theme_classic()
 ```
 
-**Bonus - can you try plotting different trends for different growth rates?**
+**Bonus - can you try plotting different trends for different per capita growth rates?**
 
 ### Assumptions and caveats
 
@@ -102,59 +109,149 @@ What assumptions are we making in our simple model of sea turtle population grow
 - Closed system, no individuals entering or leaving
 - Exponential growth, therefore no density dependence, e.g., competition
 - Birth and death rates are the same for all individuals in the population
+- etc.....
 
 Remember, **‘All models are wrong, but some are useful’**
 
 ## Let's make a more useful model for conservation decision making
 
-How can we make this more realistic in a way that will make the model more useful? We want to know how to use management to stop the population from declining….our different management actions would target different cohorts of the population,….for example we know a major cause of deaths is hatchling mortality, so we could focus actions that would support that, or we know that bycatch is another cause of mortality, so we could focus on that. How can we use this model to support the best decision?
+How can we make our model more realistic in a way that will make it more useful for informing conservation? 
 
-We can develop a slightly more complex model that assumes different age groups in the population will have different threats and therefore different per capita growth rates, allowing us to predict whether the overall population will increase or decrease if we implement actions to protect different life stages
+We want to know how to use management to stop the population from declining. Should we focus our efforts on protecting hatchlings or on reducing bycatch of adults?
+
+We can develop a slightly more complex model that assumes different age groups in the population will have different threats and therefore different per capita growth rates, allowing us to predict whether the overall population will increase or decrease if we implement management to protect different life stages (e.g., hatchlings vs. adults).
 
 ### Conceptual model
-Let’s draw a model with different life stages….
-Christina to draw conceptual model on the whiteboard.
 
-What we really want to know if focussing management on different stages of the cause the overall population to be increase.
+Let’s draw a more complex model of sea turtle life history with different life stages.
+*Christina to draw conceptual model on the whiteboard*
 
-### Mathematical model
+### Mathematical 'matrix' model
 
-To turn this into a mathematical model that we can make predictions with we can use a handy trick from linear algebra called ‘matrix multiplication'. This allows us to multiply our stage specific population growth rates by the number of individuals in each stage.
+To turn this into a mathematical model that we can make predictions with we can use a handy trick from linear algebra called *‘matrix multiplication'*. 
+
+In a nutshell, this trick allows us to multiply our stage-specific per-capita survival and population growth rates by the number of individuals in each life stage.
 
 The mathematical equation for this model looks very similar to before,
 
 $$N_{t+1} = AN_{t}$$
-but now we have $A$ instead of $r$. $A$ is a matrix of growth and survival rates defining whether individuals will either transition from one life stage to another, or whether they will remain in the same stage the following year.
+but now we have $A$ instead of $r$. $A$ is a transition matrix defining the probability that individual turtles will either transition from one life stage to another, or whether they will remain in the same stage the following year.
 
-Another slight change from our previous model is that $N$ represents a vector of number of inidividuals in the population in each life stage.
+Another slight change from our previous model is that $N$ represents a vector of number of individuals in the population in each life stage.
 
 When we multiply the vector of the number of individuals by the matrix of growth and survival rates for transitioning between life stages, we get the predicted number of individuals in each life stage in the next year. 
 
 The math (i.e., matrix multiplication), works like this...
-Christina to illustrate matrix multiplication on whiteboard
+*Christina to illustrate matrix multiplication on whiteboard*
 
-#### Parameterising the model
+#### Parameterising the model and making predictions
 
-To do this in real life, we would need to parameterise the model mortality and survival rates, how would we do that?
+To predict the number of individuals in each life stage in the future, we need to parameterise the model with annual rates of growth, survival, and  mortality and survival rates, how would we do that?
 
 - Field studies
 - Literature review
 
-Luckily, someone has already done this for us. We can use this table of demographic parameters for the Loggerhead sea turtles in Heron Island. This is a pristine population that…
+Luckily, someone has already done this for us. We can use this table of demographic parameters for the Loggerhead sea turtles in Heron Island and Mon Repos in Queensland.
 
-#### Making predictions
+![](images/transition-matrices.png)
 
-Similar to before, 
+The initial number of individuals in each life stage is: 
+- Juveniles: 10000
+- Subadults: 4000
+- Sub-adult pubescents: 2000
+- Adults: 1000
 
-One really cool thing about this is that we can use something called an eigenvalue of the matrix to estimate the overall intrinsic rate of population growth, eigenvalue = exp(r), therefore to get r, we take the inverse of the exponent, which is a log. If r is 0, then the population is stable, if its greater than 0 its increasing, and vice versa.
+How many individuals do we predict will remain in each life stage in 50 years?
 
-Let’s see what are model predicts for the trend of this population through time.
+```{r}
+predict_life_stage <- function(init_size, 
+                               fecundity, 
+                               surv_juv,
+                               surv_sa,
+                               surv_sp,
+                               surv_a,
+                               growth_juv_sa,
+                               growth_sa_sp,
+                               growth_sp_a,
+                               t){
+  trans_mat <- matrix(rep(0,16), nrow = 4, ncol = 4) # matrix of 0s
+  trans_mat[1,1] <- surv_juv
+  trans_mat[1,4] <- fecundity
+  trans_mat[2,1] <- growth_juv_sa
+  trans_mat[2,2] <- surv_sa
+  trans_mat[3,2] <- growth_sa_sp
+  trans_mat[3,3] <- surv_sp
+  trans_mat[4,3] <- growth_sp_a
+  trans_mat[4,4] <- surv_a
+  
+  out <- list()
+  out[[1]] <- data.frame(Time = 0, Stage = c('Juvenile', 'Pre-pubscent', 'Subadult', 'Adult'), Population_size = init_size)
+  for(i in 1:t){
+    out[[i+1]] <- data.frame(Time = i, Stage = c('Juvenile', 'Pre-pubscent', 'Subadult', 'Adult'), Population_size = trans_mat %*% out[[i]]$Population_size)}
+  return(list(do.call(rbind, out),trans_mat))
+}
 
-Ok, now let’s see if we do some management that increases hatchling success. What about sub-adults, with turtle exclusion devices.
+predictions <- predict_life_stage(init_size = c(1000, 10, 2000, 1000),
+                                  fecundity = 32.54,
+                                  surv_juv = 0.816,
+                                  surv_sa = 0.657,
+                                  surv_sp = 0.717,
+                                  surv_a = 0.782,
+                                  growth_juv_sa = 0.012,
+                                  growth_sa_sp = 0.056,
+                                  growth_sp_a = 0.043,
+                                  t = 100)
+tail(predictions[[1]], 4)
+```
 
-## Sensitivity analyses
+Let's plot the predicted change in the number of turtles in each life stage.
 
-Summary
+```{r}
+predictions[[1]] |> 
+  mutate(Stage = factor(Stage, levels = c('Juvenile', 'Pre-pubscent', 'Subadult', 'Adult'))) |> 
+  ggplot() +
+  aes(x = Time, y = Population_size, col = Stage) +
+  geom_line() +
+  theme_classic()
+```
+
+What about the population as a whole?
+
+```{r}
+predictions[[1]] |> 
+  group_by(Time) |> 
+  summarise(Population_size = sum(Population_size)) |> 
+  ggplot() +
+  aes(x = Time, y = Population_size) +
+  geom_hline(yintercept = sum(filter(predictions[[1]], Time == 0)$Population_size), linetype = 'dashed') +
+  geom_line() +
+  theme_classic()
+```
+
+What about adults?
+
+```{r}
+predictions[[1]] |> 
+  filter(Stage == 'Adult') |> 
+  ggplot() +
+  aes(x = Time, y = Population_size) +
+  geom_line() +
+  theme_classic()
+```
+
+## Sensitivity analyses to inform conservation decisions
+
+So now we know that, given our estimates of sea turtle fecundity, survival, and growth in each life stage, we expect that in about 50 years time we will see overall population decline that will continue into the future. 
+
+We can infer that directly from the transition matrix $A$ too, without making predictions. The dominant eigenvalue $\lambda$ of the transition matrix gives us the overall population growth rate - analogous to $r$ above. 
+
+```{r}
+eigen(predictions[[2]])$values[1] # get the dominant eigenvalue - this is the per capita population growth rate (r)
+```
+
+The population growth rate is less than 1, indicating the population overall is declining through time.
+
+## Summary
 
 So today we learned how to use some fairly simple models to inform conservation and management of threatened species.
 
@@ -168,41 +265,6 @@ Also, rather than use our models to predict the future, what if we want to estim
 
 That will be our focus for next week.
 
-Learning outcomes:
-
--              How to make a conceptual model and turn it into a mathematical model to make predictions
-
--              Difference between variable and parameter
-
--              How to parameterise models
-
--              How to use models to inform management
-
 Resources
 
 <https://www.khanacademy.org/science/ap-biology/ecology-ap/population-ecology-ap/a/exponential-logistic-growth>
-
-Key takeaways
-
--              Marine turtle populations are a major conservation concern… why?
-
--              In Australia…major threats are
-
-o   – Heron island – protected group of turtles
-
-o   Nesting females at Mon Repos – major rookery, nesting pop. Declining at % per year
-
--              Why or how could models help us conserve them?
-
--              Matrix models of population growth predict small declines in annual survival rates of adult and subadult loggerheads – profound impact on population dyamics
-
--              A loss of only a few hundred subadult and adult females each year could lead to extinction of the eastern Australian loggerheadsin less than a century
-
--              At Mon Repos, nesting female survival is apparently so low that even beach protection efforts resulting in 90% hatchling emergence success would not prevent population decline
-
-**Week 6 – Ecological Modelling – Quantifying the effect of conservation**
-
-Next week we’ll continue on our journey of learning the basics of ecological modelling. We’ll see what happens when we know longer assume the ecological relationships we’re modelling are deterministic, but rather that they are probabilistic due to natural variability.
-
-Also, rather than use our models to predict the future, what if we want to estimate the effect of management that has occurred in the past?
-
