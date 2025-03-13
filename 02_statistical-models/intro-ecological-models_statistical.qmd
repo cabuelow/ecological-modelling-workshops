@@ -105,6 +105,8 @@ To estimate the effect of MPAs on reef fish diversity we need data on the follow
 
 ### Marine protected areas (MPAs) in New South Wales
 
+Here we use the [wdpar](https://prioritizr.github.io/wdpar/index.html) package to fetch and clean MPA spatial data in Australia.
+
 ```{r}
 # load libraries
 library(wdpar)
@@ -129,47 +131,64 @@ mpa_aus |> qtm(fill = 'NO_TAKE')
 
 ### Fish diversity in New South Wales
 
+Now we need our outcome of interest - reef fish diversity in New South Wales. I've downloaded this from the [Reef Life Survey](https://reeflifesurvey.com/), so we'll just read it in here.
+
 ```{r}
 # read in fish data
-
 fish_dat <- read.csv('02_statistical-models/data/rls_surveydata.csv') |>  
   filter(indicator == 'Fish Species' & location != 'Cape Howe') 
+head(fish_dat) 
+```
 
-head(fish_dat) # turn into a spatial dataframe 
+This looks good. But ideally we want this as a spatially referenced dataframe so that we identify which reef fish diversity observations are inside or outside of MPAs.
+
+Its easy to turn a normal dataframe into a spatial dataframe in R
+
+```{r}
+# turn into a spatial dataframe 
 fish_dat_sf <- st_as_sf(fish_dat, coords = c('longitude', 'latitude'), crs = 4326) |>  
   st_transform(st_crs(mpa_aus)) 
+
+# map the reef fish observations
 qtm(fish_dat_sf)
+```
 
+Now let's do some spatial data wrangling to add a column to our reef fish observations identifying whether they are in MPAs or not - this is a variable we need to include in our statistical model. 
+
+```{r}
 # keep PAs that intersect with fish data
-
 mpa_nsw <- st_join(mpa_aus, fish_dat_sf, left = F) |> 
-  select(WDPAID:geometry) |> 
+  select(WDPAID:geom) |> 
   group_by(WDPAID, NAME) |>  
   summarise() 
-qtm(mpa_nsw)
 
 # join MPA info to fish survey data
-
 fish_dat_mpa <- fish_dat_sf |>  
   st_join(filter(mpa_aus, WDPAID %in% mpa_nsw$WDPAID))
 
 # colour fish survey points whether in an mpa or not
-
 qtm(mpa_nsw) + qtm(fish_dat_mpa, dots.col = 'PA_DEF') 
+
 # how many? 
 nrow(filter(fish_dat_mpa, PA_DEF == 'PA'))/nrow(fish_dat_mpa)
 ```
 
 ### Data on counfounders
 
+I used Google Earth to get spatial coordinates of Port locations in New South Wales. We'll use this to estimate the shortest distance between each reef fish observation to a Port. 
+
+```{r}
+# turn port data into a spatial data frame
+port_dat <- read.csv('02_statistical-models/data/nsw-ports.csv') |> 
+  st_as_sf(coords = c('long', 'lat'), crs = 4326) |>  # turn ports into a spatial dataframe
+  st_transform(st_crs(mpa_nsw)) # transform to the same coordinate reference system as the mpa data
+qtm(port_dat) + qtm(fish_dat_mpa, dots.col = 'cyan')
+```
+
+Looks good, now some more spatial data wrangling to estimate shortest distance to ports.
+
 ```{r}
 # get shortest distance of each survey point to a port
-
-port_dat <- read.csv('02_statistical-models/data/nsw-ports.csv') |> 
-  st_as_sf(coords = c('long', 'lat'), crs = 4326) |>  
-  st_transform(st_crs(mpa_nsw)) 
-qtm(port_dat) 
-
 port_dist <- fish_dat_mpa |> 
   st_distance(port_dat) 
 colnames(port_dist) <- port_dat$name 
@@ -179,52 +198,61 @@ port_dist2 <- data.frame(st_drop_geometry(fish_dat_mpa), units::drop_units(port_
   summarise(Port_distance_m = min(Port_distance_m))
 
 # join to master dataframe
-
 fish_dat_mpa <- fish_dat_mpa |> 
   left_join(port_dist2) 
 head(fish_dat_mpa)
+```
 
+Last but not least we need spatial data on habitat type and depth for each reef fish observation. I was able download those from the [Australian Ocean Data Network](https://portal.aodn.org.au/)
+
+```{r}
 # read in habitat and depth spatial data
-
 habitat_dat <- st_read('02_statistical-models/data/Seabed_habitat_New_South_Wales_State_Waters/SeamapAus_NSW_seabed_habitat_statewide_2013Polygon.shp') |> 
-  st_transform(st_crs(mpa_nsw))
+  st_transform(st_crs(mpa_nsw)) # transform to the same coordinate reference system as mpa data
 
-# spatial join
-
+# spatial join to identify habitat type and depth at each reef fish observation
 fish_dat_mpa <- fish_dat_mpa |> 
   st_join(habitat_dat) 
-head(fish_dat_mpa) # assign anything with NAs as non-reef and 0 - 20m depth 
+head(fish_dat_mpa) 
+
+# assign anything with NAs as non-reef and 0 - 20m depth
 fish_dat_mpa <- fish_dat_mpa |> 
   mutate(Habitat = ifelse(is.na(Habitat), 'Non-Reef', Habitat), Depth = ifelse(is.na(Depth), '0 - 20m', Depth)) 
+
+# save our master dataframe
 write.csv(st_drop_geometry(fish_dat_mpa), '02_statistical-models/data/master-data.csv', row.names = F)
 ```
 
-Where did I get the data?
-
-<https://reeflifesurvey.com/explorer/map>
-
-<https://prioritizr.github.io/wdpar/>
-
-<https://portal.aodn.org.au/>
+Phew, that was a lot of work! Finding, cleaning, and wrangling data often takes the most time when performing data analyses.
 
 ### Statistical model to isolate and quantify the effect of MPAs
 
+Now that we've prepared our master dataframe with our outcome, exposure, and confounder variables, we're ready to use a statistical regression model to quantify the causal effect of MPAs on reef fish diversity.
+
+First, let's have a look at a summary of the data
 ```{r}
-# fit statistical model to estimate causal effect of MPA on fish diversity
-
+# load libraries
 library(lme4)
+
+# fit statistical model to estimate causal effect of MPA on fish diversity
 dat <- read.csv('02_statistical-models/data/master-data.csv') |> 
-  # dummy code binary variables 
-  # make categorical variables factors 
-  mutate(MPA_present = factor(ifelse(is.na(PA_DEF), 0, 1)), Habitat_Depth = factor(ifelse(is.na(Label), 'Non Reef 0 - 20m', Label)), 
-         site.code = factor(site.code), fish_diversity = value, Port_distance_m = Port_distance_m/(2*sd(Port_distance_m)))
+  mutate(MPA_present = factor(ifelse(is.na(PA_DEF), 0, 1)), Habitat_Depth = factor(ifelse(is.na(Label), 'Non Reef 0 - 20m', Label)), # dummy code binary variables 
+         site.code = factor(site.code), fish_diversity = value, Port_distance_m = Port_distance_m/(2*sd(Port_distance_m))) # make categorical variables factors and standardise continuous variables
 summary(dat)
+```
 
-# what do the raw data tell us?
-
+And have a look at the raw data
+```{r}
 ggplot(dat) + 
-  aes(x = MPA_present, y = fish_diversity) + geom_boxplot() + geom_jitter(alpha = 0.2) + theme_classic()
+  aes(x = MPA_present, y = fish_diversity, col = MPA_present) + 
+  geom_boxplot() + 
+  geom_jitter(alpha = 0.2) + 
+  theme_classic()
+```
 
+So the raw data suggest fish diversity observations are similar inside and outside of MPAs in New South Wales. But what if we adjust for biases due to other variables that might be influencing diversity at these locations? Let's run the statistical model now to see. 
+
+```{r}
 # run model
 library(lme4)
 mod <- lmer(fish_diversity ~ MPA_present + Port_distance_m + Habitat_Depth + (1|site.code), data = dat) 
