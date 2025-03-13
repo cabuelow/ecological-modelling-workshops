@@ -30,7 +30,7 @@ Read the full paper [here](https://esajournals.onlinelibrary.wiley.com/doi/abs/1
 
 Similar population models have been used to inform conservation of declining loggerhead sea turtle populations in Australia.
 
-![Loggerhead migration routes in Queensland, Australia](images/loggerhead_turtle_mig_routes.jpg) 
+![Loggerhead migration routes in Queensland, Australia](images/loggerhead_turtle_mig_routes.jpg)
 
 Find out more about [loggerheads in Queensland here](https://www2.gbrmpa.gov.au/learn/animals/marine-turtles)
 
@@ -93,7 +93,7 @@ predictions <- predict_pop(init_size = 1000, r = 0.92, t = 50)
 tail(predictions) # look at the last 6 years
 ```
 
-Okay great, so we've got some predictions of sea turtle population size through time. In 50 years, there will only be ~ 15 turtles left from our initial population size of 1000.
+Okay great, so we've got some predictions of sea turtle population size through time. In 50 years, there will only be \~ 15 turtles left from our initial population size of 1000.
 
 Let's plot the trend.
 
@@ -124,7 +124,7 @@ We can develop a slightly more complex model that assumes different age groups i
 
 ### Conceptual model
 
-Let’s draw a more complex model of sea turtle life history with different life stages. 
+Let’s draw a more complex model of sea turtle life history with different life stages.
 
 **Christina to draw conceptual model on the whiteboard**
 
@@ -136,9 +136,9 @@ In a nutshell, this trick allows us to multiply our stage-specific per-capita su
 
 The mathematical equation for this model looks very similar to before,
 
-$$N_{t+1} = AN_{t}$$ 
+$$N_{t+1} = AN_{t}$$
 
-but now we have $A$ instead of $r$. 
+but now we have $A$ instead of $r$.
 
 $A$ is a transition matrix defining the probability that individual turtles will either transition from one life stage to another, or whether they will remain in the same stage the following year.
 
@@ -146,18 +146,17 @@ Another slight change from our previous model is that $N$ represents a vector of
 
 When we multiply the vector of the number of individuals by the matrix of growth and survival rates for transitioning between life stages, we get the predicted number of individuals in each life stage in the next year.
 
-The math (i.e., matrix multiplication), works like this... 
-**Christina to illustrate matrix multiplication on whiteboard**
+The math (i.e., matrix multiplication), works like this... **Christina to illustrate matrix multiplication on whiteboard**
 
 #### Parameterising the model and making predictions
 
-To predict the number of individuals in each life stage in the future, we need to parameterise the model with annual rates of growth, survival, and mortality and survival rates. 
+To predict the number of individuals in each life stage in the future, we need to parameterise the model with annual rates of growth, survival, and mortality and survival rates.
 
 How would we do that?
 
 -   Field studies
 -   Literature review
--  ...
+-   ...
 
 Luckily, someone has already done this for us. We can use this table of demographic parameters for Loggerhead sea turtles in Heron Island and Mon Repos in Queensland.
 
@@ -265,9 +264,7 @@ The population growth rate is less than 1, indicating the population overall is 
 
 To put the entire population on a stable or increasing trajectory, should we protect hatchlings or adults?
 
-To understand this, we can predict what will happen under different conservation scenarios:
-1) Scenario 1: protect hatchlings
-2) Scenario 2: protect adults
+To understand this, we can predict what will happen under different conservation scenarios: 1) Scenario 1: protect hatchlings 2) Scenario 2: protect adults
 
 ```{r}
 # make predictions Scenario 1

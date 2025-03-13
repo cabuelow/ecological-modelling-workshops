@@ -1,5 +1,5 @@
 ---
-title: "Quantifying the effect of conservation"
+title: "Week 6 – Modelling to quantify the effect of conservation"
 format: html
 theme: sandstone
 author-title: Made for
@@ -14,23 +14,24 @@ editor: visual
 embed-resources: true
 ---
 
-**Week 6 – Ecological Modelling – Quantifying the effect of MPAs on fisheries biomass**
+## Quantifying conservation effectiveness
 
-Next week we’ll continue on our journey of learning the basics of ecological modelling. We’ll see what happens when we know longer assume the ecological relationships we’re modelling are deterministic, but rather that they are probabilistic due to natural variability.
+Marine protected areas are an important tool for conserving species. In contrast to last weeks workshop where we used a mathematical model to predict the future for endangered sea turtles, we'll look to the past and use models to quantify the effect that conservation has had on fish diversity.
 
-Also, rather than use our models to predict the future, what if we want to estimate the effect of management that has occurred in the past?
+Have marine protected areas in New South Wales increased reef fish diversity, as we would expect?
 
-We’ll look at case study of
+There are a lot of different things that could influence fish diversity on reefs. A [recent paper](https://www.sciencedirect.com/science/article/pii/S0006320718316525) has highlighted the challenges of isolating the impact of MPAs in the Great Barrier Reef.
 
-<https://reeflifesurvey.com/explorer/map>
+![Theory of change for MPAs in the GBR - Fraser et al. 2019](images/toc.png)
 
-<https://prioritizr.github.io/wdpar/>
+Given all of the potential confounders, how can we isolate the effect of MPAs?
 
-where did I get the data?
+Here we'll combine a graphical modelling technique with a statistical model to isolate the effect of MPAs from observed diversity of reef fishes. 
 
-<https://portal.aodn.org.au/>
+## Structural (graphical) causal model
 
-**Population model analysis for loggerhead sea turtle, Caretta caretta, in Queensland**
+For more details - Arif and Macneil 2022
+
 ```{r}
 # set up a DAG to identify what we need to adjust for to estimate the effect of MPA on fish diversity
 
@@ -50,7 +51,13 @@ ggdag(dag, layout = "circle", text_size = 2) + theme_classic()
 # find confounders to adjust for
 
 ggdag_adjustment_set(dag, text_size = 2) + theme_classic()
+```
 
+## Data for our statistical model
+
+### Marine protected areas in New South Wales
+
+```{r}
 # get protected area data
 
 library(wdpar) 
@@ -71,7 +78,11 @@ sf_use_s2(FALSE)
 # to avoid issues with mapping invalid geometries 
 tmap_mode('view') 
 mpa_aus |>  qtm(fill = 'NO_TAKE')
+```
 
+### Fish diversity in New South Wales
+
+```{r}
 # read in fish data
 
 fish_dat <- read.csv('02_statistical-models/data/rls_surveydata.csv') |>  
@@ -100,7 +111,11 @@ fish_dat_mpa <- fish_dat_sf |>
 qtm(mpa_nsw) + qtm(fish_dat_mpa, dots.col = 'PA_DEF') 
 # how many? 
 nrow(filter(fish_dat_mpa, PA_DEF == 'PA'))/nrow(fish_dat_mpa)
+```
 
+### Data on counfounders
+
+```{r}
 # get shortest distance of each survey point to a port
 
 port_dat <- read.csv('02_statistical-models/data/nsw-ports.csv') |> 
@@ -135,10 +150,22 @@ head(fish_dat_mpa) # assign anything with NAs as non-reef and 0 - 20m depth
 fish_dat_mpa <- fish_dat_mpa |> 
   mutate(Habitat = ifelse(is.na(Habitat), 'Non-Reef', Habitat), Depth = ifelse(is.na(Depth), '0 - 20m', Depth)) 
 write.csv(st_drop_geometry(fish_dat_mpa), '02_statistical-models/data/master-data.csv', row.names = F)
+```
 
+Where did I get the data?
+
+<https://reeflifesurvey.com/explorer/map>
+
+<https://prioritizr.github.io/wdpar/>
+
+<https://portal.aodn.org.au/>
+
+### Statistical model to isolate and quantify the effect of MPAs
+
+```{r}
 # fit statistical model to estimate causal effect of MPA on fish diversity
 
-library(lme4) \# good resource: https://theoreticalecology.github.io/AdvancedRegressionModels/2C-RandomEffects.html 
+library(lme4)
 dat <- read.csv('02_statistical-models/data/master-data.csv') |> 
   # dummy code binary variables 
   # make categorical variables factors 
@@ -182,9 +209,9 @@ exp(filter(mod2_coefs, Coefficient == 'MPA_present1')$Estimate)
 exp(filter(mod2_coefs, Coefficient == '(Intercept)')$Estimate + filter(mod2_coefs, Coefficient == 'MPA_present1')$Estimate) # in MPAS, compared to outside MPAs, exp(filter(mod2_coefs, Coefficient == '(Intercept)')\$Estimate)
 
 # So, MPAs are increasing fish diversity on average by \~ 3 species
+#This is the estimated Poisson regression coefficient comparing mpas to non mpa areas, given the other #variables are held constant in the model
 
 # do a plot of the results....
-
-This is the estimated Poisson regression coefficient comparing mpas to non mpa areas, given the other variables are held constant in the model
-
 ```
+
+## Summary
