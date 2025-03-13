@@ -12,7 +12,7 @@ Link to course notes [here](https://cabuelow.quarto.pub/week-5---modelling-to-in
 ### Workshop 2 - Estimating conservation impacts with statistical models
 
 We’ll learn how models can help us quantify the effectiveness of marine conservation: how many more fish species do we have because of marine protected areas in New South Wales? The following R packages are required:
-install.packages(c(‘dagitty’, ‘ggdag’, ‘sf’, ‘tmap’, ‘wdpar’, ‘lme4’))
+`install.packages(c(‘dagitty’, ‘ggdag’, ‘sf’, ‘tmap’, ‘wdpar’, ‘lme4’))`
 
 #### Additional resources
 
