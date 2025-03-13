@@ -18,7 +18,7 @@ embed-resources: true
 
 Marine protected areas are an important tool for conserving species. In contrast to last weeks workshop where we used a mathematical model to predict the future for endangered sea turtles, we'll look to the past and use models to quantify the effect that conservation has had on fish diversity.
 
-Have marine protected areas in New South Wales increased reef fish diversity, as we would expect?
+### Have marine protected areas in New South Wales increased reef fish diversity, as we would expect?
 
 There are a lot of different things that could influence fish diversity on reefs. A [recent paper](https://www.sciencedirect.com/science/article/pii/S0006320718316525) has highlighted the challenges of isolating the impact of MPAs in the Great Barrier Reef.
 
@@ -30,54 +30,101 @@ Here we'll combine a graphical modelling technique with a statistical model to i
 
 ## Structural (graphical) causal model
 
-For more details - Arif and Macneil 2022
+Structural causal models are graphical depictions of 'cause-and-effect' relationships in our system of interest which, in this case, is reef fish communities and marine protected areas (MPAs). Technically, these are called 'Directed Acyclic Graphs' (DAGs). **Acyclic** means we can't have any bi-directional relationships.
+
+### Draw the DAG
+
+The relationship we're interested in estimating is the causal effect of MPAs on reef fish species diversity. Let's draw a DAG for it.
 
 ```{r}
-# set up a DAG to identify what we need to adjust for to estimate the effect of MPA on fish diversity
-
+# load libraries
 library(tidyverse) 
 library(dagitty) 
 library(ggdag)
 
-dag <- dagify(diversity ~ MPA, diversity ~ MPA_dist, diversity ~ latitude, diversity ~ Port_dist, diversity ~ depth, 
-              diversity ~ fishing, diversity ~ habitat, fishing ~ MPA, fishing ~ Port_dist, MPA ~ Port_dist, habitat ~ depth, 
-              habitat ~ latitude, fishing ~ MPA_dist, MPA ~ depth, MPA ~ habitat, fishing ~ habitat, fishing ~ depth, 
-              exposure = "MPA", outcome = "diversity")
+# DAG of cause and effect relationship between MPAs and reef fish diversity
+dag <- dagify(diversity ~ MPA,
+              exposure = 'MPA',
+              outcome = 'diversity')
 
-# plot the dag
-
-ggdag(dag, layout = "circle", text_size = 2) + theme_classic()
-
-# find confounders to adjust for
-
-ggdag_adjustment_set(dag, text_size = 2) + theme_classic()
+# plot it
+ggdag(dag, layout = "circle", text_size = 2) + theme_dag_blank()
 ```
+
+What else might influence both the presence of MPAs and fish diversity? Let's add them to the DAG.
+
+```{r}
+# further develop the DAG
+dag <- dagify(diversity ~ MPA, 
+              diversity ~ MPA_dist, 
+              diversity ~ latitude, 
+              diversity ~ Port_dist, 
+              diversity ~ depth, 
+              diversity ~ fishing, 
+              diversity ~ habitat, 
+              fishing ~ MPA, 
+              fishing ~ Port_dist, 
+              MPA ~ Port_dist, 
+              habitat ~ depth, 
+              habitat ~ latitude, 
+              fishing ~ MPA_dist, 
+              MPA ~ depth, 
+              MPA ~ habitat, 
+              fishing ~ habitat, 
+              fishing ~ depth, 
+              exposure = 'MPA', 
+              outcome = 'diversity')
+
+# plot it
+ggdag(dag, layout = "circle", text_size = 2) + theme_dag_blank()
+```
+
+### Find confounders to adjust for
+
+Apply 'do-calculus' to the DAG to identify confounders that need to be adjusted for to estimate the causal effect of MPAs on reef fish diversity.
+
+```{r}
+ggdag_adjustment_set(dag, text_size = 2) + theme_dag_blank()
+```
+
+This says that habitat type, depth and distance to ports are confounders we need to adjust for in our **statistical regression model** that we use to estimate the effect of MPAs on reef fish diversity.
+
+Statistical regression models allow us to quantify relationships between variables of interest, such as MPAs and reef fish diversity, assuming that all other variables (i.e., the confounders) are held constant.
+
+Before we can run the statistical model though, we need to get some data (or we could simulate it first, which is best practice, but that's beyond the scope of this course).
 
 ## Data for our statistical model
 
-### Marine protected areas in New South Wales
+To estimate the effect of MPAs on reef fish diversity we need data on the following:
+
+1. MPAs in New South Wales (our exposure variable of interest)
+2. Reef fish diversity inside and outside of MPAs in New South Wales (our outcome variable of interest)
+3. Distance to ports from each of our reef fish diversity observations
+4. Habitat type of each our reef fish diversity observations
+5. Depth of each of our reef fish diversity observations.
+
+### Marine protected areas (MPAs) in New South Wales
 
 ```{r}
-# get protected area data
-
-library(wdpar) 
+# load libraries
+library(wdpar)
 library(sf) 
 library(tmap)
 
-pa_aus <- wdpa_fetch("Australia", wait = TRUE, download_dir = rappdirs::user_data_dir("wdpar")) 
-mpa_aus <- pa_aus |>  
+# get protected area data
+#pa_aus <- wdpa_fetch("Australia", wait = TRUE, download_dir = rappdirs::user_data_dir("wdpar")) 
+#mpa_aus <- pa_aus |>  
   # filter out terrestrial mpas filter
-  filter(MARINE != "0") |> 
+ # filter(MARINE != "0") |> 
   # clean data 
-  wdpa_clean() 
-st_write(mpa_aus, '02_statistical-models/data/mpa_aus.gpkg')
+  #wdpa_clean() 
+#st_write(mpa_aus, '02_statistical-models/data/mpa_aus.gpkg')
+mpa_aus <- st_read('02_statistical-models/data/mpa_aus.gpkg')
 
-# have a look
-
-sf_use_s2(FALSE)
-# to avoid issues with mapping invalid geometries 
+# map it
+sf_use_s2(FALSE) # turn off s2 to avoid issues with mapping invalid geometries 
 tmap_mode('view') 
-mpa_aus |>  qtm(fill = 'NO_TAKE')
+mpa_aus |> qtm(fill = 'NO_TAKE')
 ```
 
 ### Fish diversity in New South Wales
@@ -215,3 +262,7 @@ exp(filter(mod2_coefs, Coefficient == '(Intercept)')$Estimate + filter(mod2_coef
 ```
 
 ## Summary
+
+## Resources
+
+For more guidance on Structural Causal Modelling in Ecology, see this [paper](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1002/ecm.1554)
