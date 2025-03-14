@@ -9,7 +9,7 @@ toc-location: left
 toc-title: Content
 toc-depth: 4
 published-title: Date
-date: 27-03-2025
+date: 2025-03-27
 editor: visual
 embed-resources: true
 ---
@@ -227,7 +227,7 @@ fish_dat_mpa <- fish_dat_mpa |>
 
 Phew, that was a lot of work! Finding, cleaning, and wrangling data often takes the most time when performing data analyses.
 
-### Statistical model to isolate and quantify the effect of MPAs
+## Statistical model to isolate and quantify the effect of MPAs
 
 Now that we've prepared our master dataframe with our outcome, exposure, and confounder variables, we're ready to use a statistical regression model to quantify the causal effect of MPAs on reef fish diversity.
 
@@ -256,7 +256,7 @@ So the raw data suggest fish diversity observations are similar inside and outsi
 
 A statistical regression model can do this for us. But, before we try to fit one to our data, let's review the basics of general linear models (**note the term 'general' is important here - there is also another class of regression called 'generalised' linear models, which we'll get to later**).
 
-#### Linear models
+### Linear models
 
 We can use linear models to estimate the strength and direction of ecological relationships. We want to estimate the relationship between MPA presence and reef fish biodiversity, while adjusting for confounders.
 
@@ -328,7 +328,7 @@ ggplot(df) +
   theme_classic()
 ```
 
-##### A little bit of maths
+#### A little bit of maths
 
 To understand how they work, it helps to take a quick look at how we formulate linear models mathematically:
 
@@ -374,13 +374,12 @@ Reef fish diversity, our $y$, is not continuous (we can't have half a species, o
 
 But first, let's fit the mis-specified model that incorrectly assumes normally distributed errors and see how we can diagnose problems with the fit of our model.
 
-#### Fitting a mis-specified model
+### Fitting a mis-specified model
 
 So, to re-cap, here is the statistical regression model we want to fit to estimate , 
 
 $$y_i = b_0 + b_{1}X_{mpa,i} + b_{2}X_{port{dist},i} + b_{3}X_{hab{depth},i} + \epsilon_i,$$
-$$\epsilon \sim Normal(0, \sigma)$$,
-
+$$\epsilon \sim Normal(0, \sigma)$$
 where $y$ is reef fish diversity, $i$ is an index of observations, $b_0$ is the intercept of average reef fish diversity, $b_{1,2,3}$ are slope coefficients for each of the covariates $X_{mpa, portdist, habdepth}$ and $\epsilon$ is the residual, unexplained error in our model. 
 
 The syntax for fitting this model in R is similar to the mathematical equation we've specified above. Note however that I've also included an additional group-level random effect term for site. Random effects is beyond the scope of this course; all you need to know for now is that this random intercept term for sites allows us to avoid violating the assumption that our reef fish diversity observations are independent (essentially the additional term is accounting for the fact that diversity observations within a site or more likely to be similar to each other than other observations).
@@ -409,7 +408,7 @@ These diagnostic plots suggest our model is mis-specified, our residuals are not
 
 So, instead we need to fit a **generalised** linear model that doesn't assume the residual error is normally distributed. 
 
-#### Fitting a correctly specified model
+### Fitting a correctly specified model
 
 There are many different types of error distributions we can choose from, depending on the type of data we are modelling. In our case, we have a discrete outcome variable that is bounded to be 0 or greater. The poisson distribution with a log link function is a good option for describing discrete, positive data (the log link ensures our counts are positive only).
 
@@ -447,7 +446,7 @@ plot(mod2)
 
 Much better. Given our model no longer violates any assumptions, we can be more confident inferring the effect of MPAs on reef fish diversity from it. 
 
-### What is the effect of MPAs on fish diversity?
+## What is the effect of MPAs on fish diversity?
 
 On average, MPAs in NSW have resulted in ~3 more species of fish
 
