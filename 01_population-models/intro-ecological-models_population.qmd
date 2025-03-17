@@ -3,7 +3,7 @@ title: "Week 5 - Modelling to inform conservation of an endangered species"
 format: html
 theme: sandstone
 author-title: Made for
-author: TAMs course
+author: TAMS course
 toc: true
 toc-location: left
 toc-title: Content
@@ -18,15 +18,21 @@ embed-resources: true
 
 ![Photograph of Geoge E.P. Box, "one of the great statistical minds of the 20th century"](images/Box.jpeg)
 
-In today's workshop we're going to learn how to model sea turtle populations using a mathematical model that, while relatively simple in comparison to some modelling approaches, has been incredibly useful.
+In today's workshop we're going to learn how to model sea turtle populations so that we can predit how many there will be the future. 
+
+We'll use a mathematical model that, while relatively simple, has been incredibly useful.
+
+#### How?
 
 ![Turtle exclusion devices (TEDs) required by law on shrimp harvesting boats since 1987](images/TED.png)
 
-US legislation requiring TEDs in shrimp trawls was a direct result of population modelling published in this scientific paper:
+US law requiring TEDs in shrimp trawls was a direct result of population modelling published in this scientific paper:
 
 ![Crouse et al. 1987](images/Crouse.png)
 
 Read the full paper [here](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.2307/1939225?casa_token=ySTTEjkJC0oAAAAA%3ApkFPN9r-mjw3_Iw7xGA-wAO5Yx_Yp6deSFZcLQWqqgvbM5-Db0mQds25syalm46yQktdS3E80xGGaDTxxg)
+
+#### Endangered sea turtles in Australia
 
 Similar population models have been used to inform conservation of declining loggerhead sea turtle populations in Australia.
 
@@ -34,13 +40,13 @@ Similar population models have been used to inform conservation of declining log
 
 Find out more about [loggerheads in Queensland here](https://www2.gbrmpa.gov.au/learn/animals/marine-turtles)
 
-Let's imagine we were conservation managers of the loggerhead sea turtle population in Queensland back in the early 1990s. We had some monitoring data that suggests the population overall has been declining since the 1970s. What can we do to help it recover?
+Let's imagine we were conservation managers of the loggerhead sea turtle population in Queensland back in the early 1990s. We had some monitoring data that suggests the population overall has been declining rapidly since the 1970s. What can we do to help it recover?
 
-**Models help us predict the 'what if' this happened...**
+**Models help us predict the 'what if' so that we can make better decisions**
 
 We can use models to help us predict what will happen under different conservation and management scenarios, in order to choose the best course of action.
 
-#### **Break out group (15 minutes)** - Loggerhead sea turtle populations
+#### **Break out group** - Loggerhead sea turtle populations
 
 1.  What are some key aspects of loggerhead sea turtle life history? For example, at what age are they able to reproduce? How long can they live?
 2.  What are the major life stages of loggerhead sea turtle populations?
@@ -53,39 +59,39 @@ What is a model? The definition is actually quite broad - a model is [an informa
 
 ### Conceptual model
 
-**Christina to draw conceptual model on the whiteboard**
+**Christina to draw conceptual model of sea turtle population dynamics on the whiteboard**
 
 **Question** - in the model we've just drawn, what is a variable and what is a parameter? What's the difference between the two?
 
 ### Mathematical model
 
-We can use some simple maths to turn this conceptual model into a mathematical model can predict how many turtles there will be in the future, based on the **initial conditions** (i.e., number of sea turtles in the population at time $t$) and model **parameters** (i.e., birth rate and death rate).
+We can use some simple maths to turn this conceptual model into a mathematical model to predict how many turtles there will be in the future based on the **initial conditions** (i.e., number of sea turtles in the population at time $t$) and model **parameters** (i.e., birth rate and death rate).
 
-First we can turn the per capita birth rate and death rate into a per capita growth rate called $r$. Following this, the change in turtle population size $N$ over time $t$ will be,
+First we can turn the per capita birth rate and death rate into a per capita population growth rate called $r$. Following this, the change in turtle population size $N$ in each time-step $t+1$ will be,
 
-$$N_{t+1} = rN_{t}$$ If $r$ is equal to 1, the population will be stable. If it's lower than 1, the population is declining. If it's greater than 1, it's increasing.
+$$N_{t+1} = rN_{t}$$ If $r$ is equal to 1, the population will be stable. If it's lower than 1, the population will decline. If it's greater than 1, it will increase.
 
 #### Run the model in R
 
-Let's say we know the initial population size ($N$) of loggerhead sea turtles is 1000 individuals and we want to know what it will be in 50 years. We've observed an annual decline in the overall population size of 8%, translating to an annual per capita growth rate ($r$) of $1-0.08 = 0.92$. Now that we've parameterised our mathematical model, we can use it to predict turtle population trends through time.
+The initial population size ($N$) of loggerhead sea turtles is 1000 individuals and we want to know what it will be in 50 years. We've observed an annual decline in the overall population size of 8%, translating to an annual per capita growth rate ($r$) of $1-0.08 = 0.92$. Now that we've parameterised our mathematical model, we can use it to predict turtle population trends through time.
 
 ```{r}
 # load the libraries we need
 library(tidyverse) # data wrangling and visualisation 'meta' package
 
 # make a function called 'predict_pop' 
-# 'predict_pop' will predict population size through time, given the following parameters:
+# 'predict_pop' will predict population size through time, given the following initial conditions and parameters:
 # init_size = initial population size
 # r = per capita growth rate or the population
-# t = time (number of years to predict to)
-predict_pop <- function(init_size, r, t){
-  out <- rep(NA, t)
-  out[1] <- init_size
-  for(i in 1:t){
+# t = time (number of time steps (years) to predict to)
+predict_pop <- function(init_size, r, t){ # specify the function arguments
+  out <- rep(NA, t) # create a vector the length of the number of time steps called 'out' that will store model outputs
+  out[1] <- init_size # set population size in the first time step to the initial population size 
+  for(i in 1:t){ # use a for loop to loop through each time-step and calculate population size at time t+1
     out[i+1] <- out[i]*r
   }
-  return(data.frame(Time = 0:t, 
-                    Population_size = out))
+  return(data.frame(Time = 0:t, # return a dataframe with a column for the time-step
+                    Population_size = out)) # and a column for the predicted population size
 }
 
 # make predictions
@@ -93,18 +99,19 @@ predictions <- predict_pop(init_size = 1000, r = 0.92, t = 50)
 tail(predictions) # look at the last 6 years
 ```
 
-Okay great, so we've got some predictions of sea turtle population size through time. In 50 years, there will only be \~ 15 turtles left from our initial population size of 1000.
+Okay great, so we've got some predictions of sea turtle population size through time. In 50 years, our model predits there will only be \~ 15 turtles left from our initial population size of 1000.
 
 Let's plot the trend.
 
-```{r}
+```{r,fig.width=2.5,fig.height=2.5, fig.align='center'}
 ggplot(predictions) +
   aes(x = Time, y = Population_size) +
   geom_line() +
+  geom_hline(yintercept = 0, lty = 'dashed', alpha = 0.5) +
   theme_classic()
 ```
 
-**Bonus - can you try plotting different trends for different per capita growth rates?**
+**Bonus - can you try plotting different trends for different per capita growth rates (r)?**
 
 ### Assumptions and caveats
 
@@ -150,15 +157,13 @@ The math (i.e., matrix multiplication), works like this... **Christina to illust
 
 #### Parameterising the model and making predictions
 
-To predict the number of individuals in each life stage in the future, we need to parameterise the model with annual rates of growth, survival, and mortality and survival rates.
+To predict the number of individuals in each life stage in the future, we need to parameterise the model with annual rates of growth, survival, and fecundity.
 
-How would we do that?
+*How can we do that?*
 
--   Field studies
--   Literature review
--   ...
+Luckily, someone has already done this for us. We can use this table of demographic parameters for Loggerhead sea turtles for two different locations in Queensland: Heron Island and Mon Repos.
 
-Luckily, someone has already done this for us. We can use this table of demographic parameters for Loggerhead sea turtles in Heron Island and Mon Repos in Queensland.
+Here we'll just focus on the threatened population, Mon Repos.
 
 ![](images/transition-matrices.png)
 
@@ -167,7 +172,7 @@ The initial number of individuals in each life stage is: - Juveniles: 2000 - Sub
 How many individuals do we predict will remain in each life stage in 50 years in Mon Repos?
 
 ```{r}
-# make a function called 'predict_life_stage' to predict the number of inidividuals in each life stage into the future
+# make a function called 'predict_life_stage' to predict the number of individuals in each life stage into the future
 predict_life_stage <- function(init_size, # initial population size
                                fecundity, # number of eggs per individual in the population
                                surv_juv, # juvenile survival probability
@@ -179,7 +184,9 @@ predict_life_stage <- function(init_size, # initial population size
                                growth_sp_a, # probability of sub-adult (pubescent) growing into an adult
                                t # prediction time in years
                                ){
-  trans_mat <- matrix(rep(0,16), nrow = 4, ncol = 4) # empty transition matrix (A)
+  # create an empty transition matrix (A)
+  trans_mat <- matrix(rep(0,16), nrow = 4, ncol = 4) 
+  
   # populate the transition matrix with survival probabilities
   trans_mat[1,1] <- surv_juv
   trans_mat[1,4] <- fecundity
@@ -190,12 +197,18 @@ predict_life_stage <- function(init_size, # initial population size
   trans_mat[4,3] <- growth_sp_a
   trans_mat[4,4] <- surv_a
   
-  out <- list() # list for storing outputs
-  out[[1]] <- data.frame(Time = 0, Stage = c('Juvenile', 'Pre-pubscent', 'Pubescent', 'Adult'), Population_size = init_size) # initialise list in year 0
-  for(i in 1:t){ # for loop to make predictions in each year
-    out[[i+1]] <- data.frame(Time = i, Stage = c('Juvenile', 'Pre-pubscent', 'Pubescent', 'Adult'), Population_size = trans_mat %*% out[[i]]$Population_size)}
+  out <- list() # empty list for storing outputs from the model
+  out[[1]] <- data.frame(Time = 0, 
+                         Stage = c('Juvenile', 'Pre-pubscent', 'Pubescent', 'Adult'),
+                         Population_size = init_size) # initialise list in year 0 with the initial population sizes in each life stage
   
-  # return dataframe of predictions and the transition matrix (A)
+  # use a for loop to make predictions in each time step
+  for(i in 1:t){ 
+    out[[i+1]] <- data.frame(Time = i, 
+                             Stage = c('Juvenile', 'Pre-pubscent', 'Pubescent', 'Adult'), 
+                             Population_size = trans_mat %*% out[[i]]$Population_size)}
+  
+  # return a dataframe of predictions and the transition matrix (A)
   return(list(do.call(rbind, out), trans_mat)) 
 }
 
@@ -210,14 +223,14 @@ predictions <- predict_life_stage(init_size = c(2000, 1800, 1500, 1000),
                                   growth_sa_sp = 0.056,
                                   growth_sp_a = 0.043,
                                   t = 50)
-tail(predictions[[1]], 4)
+tail(predictions[[1]], 4) # look at the predictions for the last year for each of the 4 life stages
 ```
 
-The population will be near extinction.
+Our model predicts the population will be near extinction.
 
-Let's plot the predicted change in the number of turtles in each life stage in 100 years.
+Let's plot the predicted change in the number of turtles in each life stage in 50 years.
 
-```{r}
+```{r,fig.width=4,fig.height=2.5, fig.align='center'}
 predictions[[1]] |> 
   mutate(Stage = factor(Stage, levels = c('Juvenile', 'Pre-pubscent', 'Pubescent', 'Adult'))) |> 
   ggplot() +
@@ -226,9 +239,13 @@ predictions[[1]] |>
   theme_classic()
 ```
 
+*Notice the rapid increase and then decrease in the Juvenile life stage. This is because the model has not yet reached a stable age distribution. Until it reaches a stable age distribution the population growth rate is not constant.*
+
+*Try logging the y axis to see when the population reaches a stable age distribution (a log transformation makes an exponential function linear*
+
 What about the population as a whole?
 
-```{r}
+```{r,fig.width=2.5,fig.height=2.5, fig.align='center'}
 predictions[[1]] |> 
   group_by(Time) |> 
   summarise(Population_size = sum(Population_size)) |> 
@@ -241,7 +258,7 @@ predictions[[1]] |>
 
 What about adults?
 
-```{r}
+```{r,fig.width=2.5,fig.height=2.5, fig.align='center'}
 predictions[[1]] |> 
   filter(Stage == 'Adult') |> 
   ggplot() +
@@ -294,11 +311,11 @@ predictions_2 <- predict_life_stage(init_size = c(2000, 1800, 1500, 1000),
 tail(predictions_2[[1]], 4)
 ```
 
-Let's plot it to compare.
+Let's plot the overall population size under each scenario to see which will result in an increase over time.
 
-```{r}
+```{r,fig.width=4,fig.height=2.5, fig.align='center'}
 all_predictions <- bind_rows(data.frame(predictions[[1]], Scenario = 'Baseline'),
-                             data.frame(predictions_1[[1]], Scenario = 'Protect hatchlings and juveniles'),
+                             data.frame(predictions_1[[1]], Scenario = 'Protect juveniles'),
                              data.frame(predictions_2[[1]], Scenario = 'Protect adults'))
 
 all_predictions |> 
@@ -311,15 +328,29 @@ all_predictions |>
   theme_classic()
 ```
 
+Our model tells us that protecting adults will result in an increasing sea turtle population in ~ 20 years.
+
+We could also compare $\lambda$ across the scenarios to inform our decision on the best course of action.
+
+```{r}
+as.numeric(eigen(predictions[[2]])$values[1]) # baseline population growth rate
+as.numeric(eigen(predictions_1[[2]])$values[1]) # protect juveniles population growth rate
+as.numeric(eigen(predictions_2[[2]])$values[1]) # protect adults population growth rate
+```
+
+Protecting adults results in a per capita population growth rate > 1, meaning that overall the population will increase over time.
+
+The same model and predictions were used to demonstrate the importance of protecting sub-adult and adult loggerhead sea turtles to increase their population size. This resulted in turtle exclusion devices (TEDs) being a requirement in Queensland's prawn fisheries.
+
 ## Summary
 
-So today we learned how to use some fairly simple models to inform conservation and management of threatened species.
+Today we learned how to use some fairly simple models to inform conservation and management of threatened species.
 
 We started with some conceptual models, added some maths and data to it, and voila, we’re making predictions about the future of sea turtles.
 
-In reality, these types of simple mathemetical models have been hugely important - eventually informing legislation to protect sea turtles.
+In reality, these types of simple mathematical models have been hugely important - eventually informing legislation to protect sea turtles.
 
-Next week we’ll continue on our journey of learning the basics of ecological modelling. We’ll see what happens when we know longer assume the ecological relationships we’re modelling are deterministic, but rather that they are probabilistic due to natural variability.
+Next week we’ll continue on our journey of learning the basics of ecological modelling. We’ll see what happens when we no longer assume the ecological relationships we’re modelling are deterministic, but rather that they are probabilistic due to natural variability.
 
 Also, rather than use our models to predict the future, what if we want to estimate the effect of conservation that has occurred in the past?
 
