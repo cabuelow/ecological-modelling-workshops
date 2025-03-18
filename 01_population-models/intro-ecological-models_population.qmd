@@ -18,7 +18,7 @@ embed-resources: true
 
 ![Photograph of Geoge E.P. Box, "one of the great statistical minds of the 20th century"](images/Box.jpeg)
 
-In today's workshop we're going to learn how to model sea turtle populations so that we can predit how many there will be the future. 
+In today's workshop we're going to learn how to model sea turtle populations so that we can predict how many there will be the future.
 
 We'll use a mathematical model that, while relatively simple, has been incredibly useful.
 
@@ -328,7 +328,7 @@ all_predictions |>
   theme_classic()
 ```
 
-Our model tells us that protecting adults will result in an increasing sea turtle population in ~ 20 years.
+Our model tells us that protecting adults will result in an increasing sea turtle population in \~ 20 years.
 
 We could also compare $\lambda$ across the scenarios to inform our decision on the best course of action.
 
@@ -338,7 +338,7 @@ as.numeric(eigen(predictions_1[[2]])$values[1]) # protect juveniles population g
 as.numeric(eigen(predictions_2[[2]])$values[1]) # protect adults population growth rate
 ```
 
-Protecting adults results in a per capita population growth rate > 1, meaning that overall the population will increase over time.
+Protecting adults results in a per capita population growth rate \> 1, meaning that overall the population will increase over time.
 
 The same model and predictions were used to demonstrate the importance of protecting sub-adult and adult loggerhead sea turtles to increase their population size. This resulted in turtle exclusion devices (TEDs) being a requirement in Queensland's prawn fisheries.
 
