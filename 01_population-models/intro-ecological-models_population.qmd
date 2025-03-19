@@ -67,7 +67,7 @@ What is a model? The definition is actually quite broad - a model is [an informa
 
 We can use some simple maths to turn this conceptual model into a mathematical model to predict how many turtles there will be in the future based on the **initial conditions** (i.e., number of sea turtles in the population at time $t$) and model **parameters** (i.e., birth rate and death rate).
 
-First we can turn the per capita birth rate and death rate into a per capita population growth rate called $r$. Following this, the change in turtle population size $N$ in each time-step $t+1$ will be,
+First we can turn the per capita birth rate and death rate into a per capita growth rate called $r$. Following this, the change in turtle population size $N$ in each time-step $t+1$ will be,
 
 $$N_{t+1} = rN_{t}$$ If $r$ is equal to 1, the population will be stable. If it's lower than 1, the population will decline. If it's greater than 1, it will increase.
 
@@ -82,7 +82,7 @@ library(tidyverse) # data wrangling and visualisation 'meta' package
 # make a function called 'predict_pop' 
 # 'predict_pop' will predict population size through time, given the following initial conditions and parameters:
 # init_size = initial population size
-# r = per capita growth rate or the population
+# r = per capita growth rate of the population
 # t = time (number of time steps (years) to predict to)
 predict_pop <- function(init_size, r, t){ # specify the function arguments
   out <- rep(NA, t) # create a vector the length of the number of time steps called 'out' that will store model outputs
@@ -161,7 +161,9 @@ To predict the number of individuals in each life stage in the future, we need t
 
 *How can we do that?*
 
-Luckily, someone has already done this for us. We can use this table of demographic parameters for Loggerhead sea turtles for two different locations in Queensland: Heron Island and Mon Repos.
+Luckily, someone has already done this for us. Check out the paper [here](https://www.publish.csiro.au/wr/wr9960143).
+
+We can use this table of demographic parameters for Loggerhead sea turtles for two different locations in Queensland: Heron Island and Mon Repos.
 
 Here we'll just focus on the threatened population, Mon Repos.
 
@@ -274,7 +276,7 @@ So now we know that, given our estimates of sea turtle fecundity, survival, and 
 We can infer that directly from the transition matrix $A$ too, without making predictions. We'll use another handy trick from linear algebra. The dominant eigenvalue $\lambda$ of the transition matrix gives us the overall population growth rate - analogous to $r$ above.
 
 ```{r}
-as.numeric(eigen(predictions[[2]])$values[1]) # get the dominant eigenvalue - this is the per capita population growth rate (r)
+as.numeric(eigen(predictions[[2]])$values[1]) # get the dominant eigenvalue - this is the per capita growth rate (r)
 ```
 
 The population growth rate is less than 1, indicating the population overall is declining through time.
