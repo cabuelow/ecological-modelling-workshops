@@ -3,7 +3,7 @@ title: "Week 6 – Modelling to quantify the effect of conservation"
 format: html
 theme: sandstone
 author-title: Made for
-author: TAMs course
+author: TAMS course
 toc: true
 toc-location: left
 toc-title: Content
@@ -18,7 +18,7 @@ Download the data you'll need for this workshop [here](data.zip)
 
 ## Quantifying conservation effectiveness
 
-Marine protected areas are an important tool for conserving species. In contrast to last weeks workshop where we used a mathematical model to predict the future for endangered sea turtles, we'll look to the past and use models to quantify the effect that conservation has had on fish diversity.
+Marine protected areas are an important tool for conserving species. In contrast to last week's workshop where we used a mathematical model to predict the future for endangered sea turtles, we'll look to the past and use models to quantify the effect that conservation has had on fish diversity.
 
 ### Have marine protected areas in New South Wales increased reef fish diversity, as we would expect?
 
@@ -28,7 +28,7 @@ There are a lot of different things that could influence fish diversity on reefs
 
 Given all of the potential confounders, how can we isolate the effect of MPAs?
 
-Here we'll combine a graphical modelling technique with a statistical model to isolate the effect of MPAs from observed diversity of reef fishes. 
+Here we'll combine a graphical modelling technique with a statistical model to isolate the effect of MPAs on observed diversity of reef fishes.
 
 ## Structural (graphical) causal model
 
@@ -40,7 +40,7 @@ The relationship we're interested in estimating is the causal effect of MPAs on 
 
 ```{r}
 # load libraries
-library(tidyverse) 
+library(tidyverse)
 library(dagitty) 
 library(ggdag)
 
@@ -99,11 +99,11 @@ Before we can run the statistical model though, we need to get some data (or we 
 
 To estimate the effect of MPAs on reef fish diversity we need data on the following:
 
-1. MPAs in New South Wales (our exposure variable of interest)
-2. Reef fish diversity inside and outside of MPAs in New South Wales (our outcome variable of interest)
-3. Distance to ports from each of our reef fish diversity observations
-4. Habitat type of each our reef fish diversity observations
-5. Depth of each of our reef fish diversity observations.
+1.  MPAs in New South Wales (our exposure variable of interest)
+2.  Reef fish diversity inside and outside of MPAs in New South Wales (our outcome variable of interest)
+3.  Distance to ports from each of our reef fish diversity observations
+4.  Habitat type of each our reef fish diversity observations
+5.  Depth of each of our reef fish diversity observations.
 
 ### Marine protected areas (MPAs) in New South Wales
 
@@ -138,7 +138,7 @@ Now we need our outcome of interest - reef fish diversity in New South Wales. I'
 ```{r}
 # read in fish data
 fish_dat <- read.csv('data/rls_surveydata.csv') |>  
-  filter(indicator == 'Fish Species' & location != 'Cape Howe') 
+  filter(indicator == 'Fish Species' & location != 'Cape Howe') # whoops, exclude Cape Howe, it is on the NSW-Victoria border
 head(fish_dat) 
 ```
 
@@ -148,14 +148,15 @@ Its easy to turn a normal dataframe into a spatial dataframe in R
 
 ```{r}
 # turn into a spatial dataframe 
-fish_dat_sf <- st_as_sf(fish_dat, coords = c('longitude', 'latitude'), crs = 4326) |>  
+fish_dat_sf <- fish_dat |> 
+  st_as_sf(coords = c('longitude', 'latitude'), crs = 4326) |>  
   st_transform(st_crs(mpa_aus)) 
 
 # map the reef fish observations
 qtm(fish_dat_sf)
 ```
 
-Now let's do some spatial data wrangling to add a column to our reef fish observations identifying whether they are in MPAs or not - this is a variable we need to include in our statistical model. 
+Now let's do some spatial data wrangling to add a column to our reef fish observations identifying whether they are in MPAs or not - this is a variable we need to include in our statistical model.
 
 ```{r}
 # keep PAs that intersect with fish data
@@ -177,13 +178,15 @@ nrow(filter(fish_dat_mpa, PA_DEF == 'PA'))/nrow(fish_dat_mpa)
 
 ### Data on counfounders
 
-I used Google Earth to get spatial coordinates of Port locations in New South Wales. We'll use this to estimate the shortest distance between each reef fish observation to a Port. 
+I used Google Earth to get spatial coordinates of Port locations in New South Wales. We'll use this to estimate the shortest distance between each reef fish observation to a Port.
 
 ```{r}
 # turn port data into a spatial data frame
 port_dat <- read.csv('data/nsw-ports.csv') |> 
   st_as_sf(coords = c('long', 'lat'), crs = 4326) |>  # turn ports into a spatial dataframe
   st_transform(st_crs(mpa_nsw)) # transform to the same coordinate reference system as the mpa data
+
+# map it
 qtm(port_dat) + qtm(fish_dat_mpa, dots.col = 'cyan')
 ```
 
@@ -232,19 +235,24 @@ Phew, that was a lot of work! Finding, cleaning, and wrangling data often takes 
 Now that we've prepared our master dataframe with our outcome, exposure, and confounder variables, we're ready to use a statistical regression model to quantify the causal effect of MPAs on reef fish diversity.
 
 First, let's have a look at a summary of the data
+
 ```{r}
 # load libraries
 library(lme4)
 
 # fit statistical model to estimate causal effect of MPA on fish diversity
 dat <- read.csv('data/master-data.csv') |> 
-  mutate(MPA_present = factor(ifelse(is.na(PA_DEF), 0, 1)), Habitat_Depth = factor(ifelse(is.na(Label), 'Non Reef 0 - 20m', Label)), # dummy code binary variables 
-         site.code = factor(site.code), fish_diversity = value, Port_distance_m = Port_distance_m/(2*sd(Port_distance_m))) # make categorical variables factors and standardise continuous variables
+  mutate(MPA_present = factor(ifelse(is.na(PA_DEF), 0, 1)), 
+         Habitat_Depth = factor(ifelse(is.na(Label), 'Non Reef 0 - 20m', Label)), # dummy code binary variables 
+         site.code = factor(site.code), 
+         fish_diversity = value, 
+         Port_distance_m = Port_distance_m/(2*sd(Port_distance_m))) # make categorical variables factors and standardise continuous variables
 summary(dat)
 ```
 
 And have a look at the raw data
-```{r}
+
+```{r,fig.width=3,fig.height=2.5, fig.align='center'}
 ggplot(dat) + 
   aes(x = MPA_present, y = fish_diversity, col = MPA_present) + 
   geom_boxplot() + 
@@ -252,7 +260,7 @@ ggplot(dat) +
   theme_classic()
 ```
 
-So the raw data suggest fish diversity observations are similar inside and outside of MPAs in New South Wales. But what if we adjust for biases due to other variables that might be influencing diversity at these locations? 
+So the raw data suggest fish diversity observations are similar inside and outside of MPAs in New South Wales. But what if we adjust for biases due to other variables that might be influencing diversity at these locations?
 
 A statistical regression model can do this for us. But, before we try to fit one to our data, let's review the basics of general linear models (**note the term 'general' is important here - there is also another class of regression called 'generalised' linear models, which we'll get to later**).
 
@@ -344,9 +352,9 @@ $$y_i = b_0 + b_{1}X_{1i} + \epsilon_i,$$
 
 -   $\epsilon$ is the random, unexplained error in our observations around the fitted relationship(s) between $y$ and $X$(s).
 
-We'll often refer to $\epsilon$ as the **residual error**. It is this residual error term that makes our model a 'statistical' one rather than a purely mathematical (determinisitc) one.
+We'll often refer to $\epsilon$ as the **residual error**. It is this residual error term that makes our model a 'statistical' one rather than a purely mathematical (deterministic) one.
 
-In the above example we only have one covariate, our exposure variable ($X_{1}$; MPA presence). We will also need to include additional terms for each of our confounder variaables that we wish to adjust for; e.g. $b_{2}X_{2i}$. When we add more than one covariate to the right hand side of the equation, the interpretation of the beta coefficients (slopes) becomes 'the average change in $y$ in response to a one unit shift in $X$, *holding all other covariates constant*'. This is the beauty and power of multiple linear regression, we can evaluate the effect of each explantory variable in isolation from others.
+In the above example we only have one covariate, our exposure variable ($X_{1}$; MPA presence). We will also need to include additional terms for each of our confounder variaables that we wish to adjust for; e.g. $b_{2}X_{2i}$. When we add more than one covariate to the right hand side of the equation, the interpretation of the beta coefficients (slopes) becomes 'the average change in $y$ in response to a one unit shift in $X$, *holding all other covariates constant*'. This is the beauty and power of multiple linear regression, we can evaluate the effect of each covariate in isolation from others.
 
 When we're fitting **general** linear models, we assume that $\epsilon$, the error term, is drawn from a normal (i.e., gaussian) probability distribution. We can write that assumption mathematically as,
 
@@ -354,7 +362,7 @@ $$\epsilon \sim Normal(0, \sigma)$$ where the mean is 0 and $\sigma$ is the stan
 
 What does a normal probability distribution look like? We can draw some random numbers from a normal distribution and plot them up. We noted above that the normal distribution has two parameters, the mean ($\mu$) and the standard deviation ($\sigma$).
 
-```{r}
+```{r,fig.width=3,fig.height=2.5, fig.align='center'}
 # draw a vector of 1000 random numbers from a normal probability distribution
 random_numbers <- data.frame(normal_random_numbers = rnorm(n = 1000, mean = 0, sd = 2))
 
@@ -366,25 +374,24 @@ random_numbers |>
   theme_classic()
 ```
 
-So, just as we would expect, the mean is around 0. What happens if you change the mean or increase the standard deviation? 
+So, just as we would expect, the mean is around 0. What happens if you change the mean or increase the standard deviation?
 
 When our outcome or interest ($y$) is continuous and unbounded (i.e., could potentially be any number between $-∞$ and $∞$), assuming that $\epsilon$ (our residual error) is normally distributed makes sense.
 
-Reef fish diversity, our $y$, is not continuous (we can't have half a species, only whole integers) and can't be negative (< 0). It is a discrete variable bounded to only positive numbers (0 to $∞$). So by assuming that the residual error of a linear regression fitted to reef fish diversity will be normally distributed will result in a mis-specified model. To fit a correctly specified model, we'll need to use a *generalised linear model*. 
+Reef fish diversity, our $y$, is not continuous (we can't have half a species, only whole integers) and can't be negative (\< 0). It is a discrete variable bounded to only positive numbers (0 to $∞$). So by assuming that the residual error of a linear regression fitted to reef fish diversity will be normally distributed will result in a mis-specified model. To fit a correctly specified model, we'll need to use a *generalised linear model*.
 
 But first, let's fit the mis-specified model that incorrectly assumes normally distributed errors and see how we can diagnose problems with the fit of our model.
 
 ### Fitting a mis-specified model
 
-So, to re-cap, here is the statistical regression model we want to fit to estimate , 
+So, to re-cap, here is the statistical regression model we want to fit to estimate,
 
-$$y_i = b_0 + b_{1}X_{mpa,i} + b_{2}X_{port{dist},i} + b_{3}X_{hab{depth},i} + \epsilon_i,$$
-$$\epsilon \sim Normal(0, \sigma)$$
-where $y$ is reef fish diversity, $i$ is an index of observations, $b_0$ is the intercept of average reef fish diversity, $b_{1,2,3}$ are slope coefficients for each of the covariates $X_{mpa, portdist, habdepth}$ and $\epsilon$ is the residual, unexplained error in our model. 
+$$y_i = b_0 + b_{1}X_{mpa,i} + b_{2}X_{port{dist},i} + b_{3}X_{hab{depth},i} + \epsilon_i,$$ $$\epsilon \sim Normal(0, \sigma)$$ where $y$ is reef fish diversity, $i$ is an index of observations, $b_0$ is the intercept of average reef fish diversity, $b_{1,2,3}$ are slope coefficients for each of the covariates $X_{mpa, portdist, habdepth}$ and $\epsilon$ is the residual, unexplained error in our model.
 
 The syntax for fitting this model in R is similar to the mathematical equation we've specified above. Note however that I've also included an additional group-level random effect term for site. Random effects is beyond the scope of this course; all you need to know for now is that this random intercept term for sites allows us to avoid violating the assumption that our reef fish diversity observations are independent (essentially the additional term is accounting for the fact that diversity observations within a site or more likely to be similar to each other than other observations).
 
 Ok, lets fit the model
+
 ```{r}
 # load libraries
 library(lme4)
@@ -394,9 +401,9 @@ mod <- lmer(fish_diversity ~ MPA_present + Port_distance_m + Habitat_Depth + (1|
 summary(mod)
 ```
 
-Before we go ahead an try interpreting the effect size estimates (i.e., the strength and direction of the relationship between our exposure (MPA presence) and outcome (reef fish diversity)), we first want to check that our model is not violating the following assumptions, i.e., the residuals are normally distributed and homoskedastic. If these assumptions are violated the effect size estimates are likely to be biased.
+Before we go ahead and try interpreting the effect size estimates (i.e., the strength and direction of the relationship between our exposure (MPA presence) and outcome (reef fish diversity)), we first want to check that our model is not violating the following structural model assumptions: the residuals are normally distributed and homoskedastic. If these assumptions are violated the effect size estimates are likely to be biased.
 
-```{r}
+```{r,fig.width=4,fig.height=2.5, fig.align='center'}
 # check our structural model assumptions
 par(mfrow = c(1, 2))
 qqnorm(resid(mod)) # normality of residuals
@@ -404,9 +411,9 @@ qqline(resid(mod))
 plot(mod) # residuals against fitted values - don't want to see any strong patterns
 ```
 
-These diagnostic plots suggest our model is mis-specified, our residuals are not normally distributed or homoskedastic as we had assumed. 
+These diagnostic plots suggest our model is mis-specified, our residuals are not normally distributed or homoskedastic as we had assumed.
 
-So, instead we need to fit a **generalised** linear model that doesn't assume the residual error is normally distributed. 
+So, instead we need to fit a **generalised** linear model that doesn't assume the residual error is normally distributed.
 
 ### Fitting a correctly specified model
 
@@ -416,7 +423,7 @@ Sometimes visualising these abstract concepts helps us to understand them. Like 
 
 Unlike the normal distribution, the poisson only has one parameter called lambda ($\lambda$) - it describes both the mean and the variance of the data (and therefore assumes they are equal).
 
-```{r}
+```{r,fig.width=3,fig.height=2.5, fig.align='center'}
 # draw random number form a poisson distribution
 random_numbers_poisson <- rpois(n = 1000, lambda = 1)
 
@@ -433,7 +440,7 @@ random_numbers_poisson |>
 
 Let's try fitting the model.
 
-```{r}
+```{r,fig.width=4,fig.height=2.5, fig.align='center'}
 # fit with a poisson distribution
 mod2 <- glmer(fish_diversity ~ MPA_present + Port_distance_m + Habitat_Depth + (1|site.code), data = dat, family = poisson(link = "log")) 
 
@@ -444,11 +451,11 @@ qqline(resid(mod2))
 plot(mod2)
 ```
 
-Much better. Given our model no longer violates any assumptions, we can be more confident inferring the effect of MPAs on reef fish diversity from it. 
+Much better. Given our model no longer violates any assumptions, we can be more confident inferring the effect of MPAs on reef fish diversity from it.
 
 ## What is the effect of MPAs on fish diversity?
 
-On average, MPAs in NSW have resulted in ~3 more species of fish
+On average, MPAs in NSW have resulted in \~3 more species of fish
 
 ```{r}
 # extract model beta coefficients (intercept and effect sizes (slopes))
