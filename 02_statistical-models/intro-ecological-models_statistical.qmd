@@ -38,7 +38,7 @@ Structural causal models are graphical depictions of 'cause-and-effect' relation
 
 The relationship we're interested in estimating is the causal effect of MPAs on reef fish species diversity. Let's draw a DAG for it.
 
-```{r}
+```{r,fig.width=3,fig.height=2.5, fig.align='center'}
 # load libraries
 library(tidyverse)
 library(dagitty) 
@@ -252,7 +252,7 @@ summary(dat)
 
 And have a look at the raw data
 
-```{r,fig.width=3,fig.height=2.5, fig.align='center'}
+```{r,fig.width=4,fig.height=2.5, fig.align='center'}
 ggplot(dat) + 
   aes(x = MPA_present, y = fish_diversity, col = MPA_present) + 
   geom_boxplot() + 
