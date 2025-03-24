@@ -38,12 +38,15 @@ Structural causal models are graphical depictions of 'cause-and-effect' relation
 
 The relationship we're interested in estimating is the causal effect of MPAs on reef fish species diversity. Let's draw a DAG for it.
 
-```{r,fig.width=3,fig.height=2.5, fig.align='center'}
+```{r}
+#| output: false
 # load libraries
 library(tidyverse)
 library(dagitty) 
 library(ggdag)
+```
 
+```{r,fig.width=3,fig.height=2.5, fig.align='center'}
 # DAG of cause and effect relationship between MPAs and reef fish diversity
 dag <- dagify(diversity ~ MPA,
               exposure = 'MPA',
@@ -110,6 +113,7 @@ To estimate the effect of MPAs on reef fish diversity we need data on the follow
 Here we use the [wdpar](https://prioritizr.github.io/wdpar/index.html) package to fetch and clean MPA spatial data in Australia.
 
 ```{r}
+#| output: false
 # load libraries
 library(wdpar)
 library(sf) 
@@ -128,6 +132,9 @@ mpa_aus <- st_read('data/mpa_aus.gpkg')
 # map it
 sf_use_s2(FALSE) # turn off s2 to avoid issues with mapping invalid geometries 
 tmap_mode('view') 
+```
+
+```{r}
 mpa_aus |> qtm(fill = 'NO_TAKE')
 ```
 
@@ -205,7 +212,6 @@ port_dist2 <- data.frame(st_drop_geometry(fish_dat_mpa), units::drop_units(port_
 # join to master dataframe
 fish_dat_mpa <- fish_dat_mpa |> 
   left_join(port_dist2) 
-head(fish_dat_mpa)
 ```
 
 Last but not least, we need spatial data on habitat type and depth for each reef fish observation. I was able download those from the [Australian Ocean Data Network](https://portal.aodn.org.au/)
@@ -218,7 +224,6 @@ habitat_dat <- st_read('data/Seabed_habitat_New_South_Wales_State_Waters/SeamapA
 # spatial join to identify habitat type and depth at each reef fish observation
 fish_dat_mpa <- fish_dat_mpa |> 
   st_join(habitat_dat) 
-head(fish_dat_mpa) 
 
 # assign anything with NAs as non-reef and 0 - 20m depth
 fish_dat_mpa <- fish_dat_mpa |> 
@@ -247,7 +252,7 @@ dat <- read.csv('data/master-data.csv') |>
          site.code = factor(site.code), 
          fish_diversity = value, 
          Port_distance_m = Port_distance_m/(2*sd(Port_distance_m))) # make categorical variables factors and standardise continuous variables
-summary(dat)
+summary(select(dat, fish_diversity, MPA_present, Habitat_Depth, Port_distance_m))
 ```
 
 And have a look at the raw data
@@ -403,7 +408,7 @@ summary(mod)
 
 Before we go ahead and try interpreting the effect size estimates (i.e., the strength and direction of the relationship between our exposure (MPA presence) and outcome (reef fish diversity)), we first want to check that our model is not violating the following structural model assumptions: the residuals are normally distributed and homoskedastic. If these assumptions are violated the effect size estimates are likely to be biased.
 
-```{r,fig.width=2.7,fig.height=2.5, fig.align='center'}
+```{r,fig.width=2.7,fig.height=3, fig.align='center'}
 # check our structural model assumptions
 qqnorm(resid(mod)) # normality of residuals
 qqline(resid(mod))
@@ -427,12 +432,9 @@ Unlike the normal distribution, the poisson only has one parameter called lambda
 
 ```{r,fig.width=3,fig.height=2.5, fig.align='center'}
 # draw random number form a poisson distribution
-random_numbers_poisson <- rpois(n = 1000, lambda = 1)
-
-# plot a histogram of the random poisson distribution
 random_numbers_poisson <- data.frame(poisson_random_numbers = rpois(n = 1000, lambda = 1))
 
-# plot a histogram of the distribution of normally distributed random numbers
+# plot a histogram of the distribution
 random_numbers_poisson |>
   ggplot() +
   aes(x = poisson_random_numbers) +
@@ -442,10 +444,13 @@ random_numbers_poisson |>
 
 Let's try fitting the model.
 
-```{r,fig.width=2.7,fig.height=2.5, fig.align='center'}
+```{r}
 # fit with a poisson distribution
 mod2 <- glmer(fish_diversity ~ MPA_present + Port_distance_m + Habitat_Depth + (1|site.code), data = dat, family = poisson(link = "log")) 
+summary(mod2)
+```
 
+```{r,fig.width=2.7,fig.height=3, fig.align='center'}
 # check structural model assumptions
 qqnorm(resid(mod2))
 qqline(resid(mod2)) 
