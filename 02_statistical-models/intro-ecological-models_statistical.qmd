@@ -403,11 +403,13 @@ summary(mod)
 
 Before we go ahead and try interpreting the effect size estimates (i.e., the strength and direction of the relationship between our exposure (MPA presence) and outcome (reef fish diversity)), we first want to check that our model is not violating the following structural model assumptions: the residuals are normally distributed and homoskedastic. If these assumptions are violated the effect size estimates are likely to be biased.
 
-```{r,fig.width=4,fig.height=2.5, fig.align='center'}
+```{r,fig.width=2.7,fig.height=2.5, fig.align='center'}
 # check our structural model assumptions
-par(mfrow = c(1, 2))
 qqnorm(resid(mod)) # normality of residuals
-qqline(resid(mod)) 
+qqline(resid(mod))
+```
+
+```{r,fig.width=4,fig.height=2.5, fig.align='center'}
 plot(mod) # residuals against fitted values - don't want to see any strong patterns
 ```
 
@@ -440,14 +442,16 @@ random_numbers_poisson |>
 
 Let's try fitting the model.
 
-```{r,fig.width=4,fig.height=2.5, fig.align='center'}
+```{r,fig.width=2.7,fig.height=2.5, fig.align='center'}
 # fit with a poisson distribution
 mod2 <- glmer(fish_diversity ~ MPA_present + Port_distance_m + Habitat_Depth + (1|site.code), data = dat, family = poisson(link = "log")) 
 
 # check structural model assumptions
-par(mfrow = c(1, 2))
-qqnorm(resid(mod2)) 
+qqnorm(resid(mod2))
 qqline(resid(mod2)) 
+```
+
+```{r,fig.width=4,fig.height=2.5, fig.align='center'}
 plot(mod2)
 ```
 
