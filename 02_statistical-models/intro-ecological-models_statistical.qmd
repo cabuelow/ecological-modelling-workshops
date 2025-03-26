@@ -316,7 +316,7 @@ b <- ggplot(df) +
 a+b
 ```
 
-Although general linear models assume a linear relationship between the response and explanatory variable, **they can accommodate non-linearity** via a non-linear transformation of the explanatory variable. For example, this quadratic relationship between the explanatory and response.
+Although general linear models assume a linear relationship between the response and explanatory variable, **they can accommodate non-linearity** via a non-linear transformation of the covariate. For example, this quadratic relationship between the covariate and response.
 
 ```{r, fig.width=2.5,fig.height=2.5, fig.align='center'}
 #| echo: false
@@ -389,7 +389,7 @@ But first, let's fit the mis-specified model that incorrectly assumes normally d
 
 ### Fitting a mis-specified model
 
-So, to re-cap, here is the statistical regression model we want to fit to estimate,
+So, to re-cap, here is the statistical regression model we want to fit:
 
 $$y_i = b_0 + b_{1}X_{mpa,i} + b_{2}X_{port{dist},i} + b_{3}X_{hab{depth},i} + \epsilon_i,$$ $$\epsilon \sim Normal(0, \sigma)$$ where $y$ is reef fish diversity, $i$ is an index of observations, $b_0$ is the intercept of average reef fish diversity, $b_{1,2,3}$ are slope coefficients for each of the covariates $X_{mpa, portdist, habdepth}$ and $\epsilon$ is the residual, unexplained error in our model.
 
